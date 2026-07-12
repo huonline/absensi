@@ -6,8 +6,7 @@ import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com
 const firebaseConfig = {
     apiKey: "AIzaSyClHDzTGncpd_5-Gnc4zmL3JVrXX1tiGKQ",
     authDomain: "admin-hu-874c2.firebaseapp.com",
-    // Tambahkan databaseURL project kamu:
-    databaseURL: "https://admin-hu-874c2-default-rtdb.firebaseio.com", 
+    databaseURL: "https://admin-hu-874c2-default-rtdb.firebaseio.com",
     projectId: "admin-hu-874c2",
     storageBucket: "admin-hu-874c2.firebasestorage.app",
     messagingSenderId: "419870283564",
