@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Data Santri - Super Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container container-large">
+        <header class="header">
+            <div class="nav-bar">
+                <h1>Data Master Santri</h1>
+                <a href="super-admin.html" class="btn-nav">&larr; Kembali ke Dashboard</a>
+            </div>
+            <p>Kelola daftar nama santri per kobong (Salin & Tempel dari Excel)</p>
+        </header>
+
+        <section class="admin-section">
+            <form id="form-excel">
+                <div class="form-group">
+                    <label for="data-excel">Paste Data Santri Dari Excel:</label>
+                    <textarea id="data-excel" rows="8" placeholder="Contoh:&#10;KOBONG JADID (Total 20):&#10;1. Ahmad&#10;2. Zaky&#10;&#10;KOBONG QODIM (Total 18):&#10;1. Budi"></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Simpan Data Santri</button>
+            </form>
+
+            <div class="master-santri-box">
+                <h3>Daftar Santri Terdaftar Saat Ini:</h3>
+                <pre id="display-santri">Belum ada data santri yang disimpan.</pre>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
