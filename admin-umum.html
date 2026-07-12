@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Monitoring Absensi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container container-large">
+        <!-- Header -->
+        <header class="header">
+            <h1>Dashboard Super Admin</h1>
+            <p>Pusat Monitoring & Konfirmasi Absensi Santri</p>
+        </header>
+
+        <!-- SEKSI 1: LAPORAN MASUK DARI KOBONG -->
+        <section class="admin-section">
+            <h2>Laporan Kehadiran Hari Ini</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Kobong</th>
+                            <th>Status</th>
+                            <th>Catatan Santri</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-laporan">
+                        <!-- Data Laporan Kobong Akan Muncul Di Sini via JS -->
+                        <tr>
+                            <td colspan="5" class="text-center">Belum ada laporan masuk.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- SEKSI 2: INPUT / PASTE DATA SANTRI DARI EXCEL -->
+        <section class="admin-section">
+            <h2>Data Master Santri (Paste dari Excel)</h2>
+            <p class="subtitle">Salin data dari Excel (misal: Nama & Kobong) lalu tempel di bawah ini:</p>
+            
+            <form id="form-excel">
+                <div class="form-group">
+                    <textarea id="data-excel" rows="6" placeholder="Format bebas/langsung paste dari Excel, contoh:&#10;Ahmad - Kobong A&#10;Zaky - Kobong A&#10;Budi - Kobong B"></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Simpan Data Santri</button>
+            </form>
+
+            <div class="master-santri-box">
+                <h3>Daftar Santri Terdata:</h3>
+                <pre id="display-santri">Belum ada data santri yang disimpan.</pre>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
