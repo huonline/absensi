@@ -137,3 +137,101 @@ textarea {
 .btn-submit:active {
     transform: scale(0.99);
 }
+
+
+/* --- TAMBAHAN CSS DIBAGIAN BAWAH STYLE.CSS UNTUK SUPER ADMIN --- */
+
+.container-large {
+    max-width: 800px; /* Lebih lebar dari form biasa */
+}
+
+.admin-section {
+    margin-bottom: 24px;
+}
+
+.admin-section h2 {
+    font-size: 1.1rem;
+    color: #2e7d32;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background: #e0e0e0;
+    margin: 24px 0;
+}
+
+/* TABLE STYLES */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin-top: 10px;
+}
+
+.data-table th, .data-table td {
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: #f0f7f1;
+    color: #2e7d32;
+}
+
+.text-center {
+    text-align: center;
+    color: #888;
+}
+
+/* BUTTON ACC/KONFIRMASI */
+.btn-approve {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-approve:hover {
+    background-color: #1b5e20;
+}
+
+.status-approved {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+/* MASTER SANTRI BOX */
+.master-santri-box {
+    margin-top: 15px;
+    background: #fafafa;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.master-santri-box h3 {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+}
+
+#display-santri {
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    color: #444;
+}
