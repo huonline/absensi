@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Absensi Kobong</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 id="nama-kobong">Laporan Absensi Kobong</h1>
+            <p>Silakan isi laporan kehadiran santri untuk waktu Pagi/Malam.</p>
+        </header>
+
+        <!-- Form Laporan -->
+        <form id="form-absensi">
+            
+            <!-- Waktu Laporan -->
+            <div class="form-group">
+                <label for="waktu">Waktu Laporan</label>
+                <select id="waktu" name="waktu" required>
+                    <option value="" disabled selected>-- Pilih Waktu --</option>
+                    <option value="Pagi">Subuh / Pagi</option>
+                    <option value="Malam">Malam</option>
+                </select>
+            </div>
+
+            <!-- Status Kehadiran -->
+            <div class="form-group">
+                <label>Status Anggota Kobong</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="status" value="Lengkap" required>
+                        <span>Lengkap / Full</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="status" value="Tidak Lengkap" required>
+                        <span>Ada yang Hilang / Absen</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Detail Santri Hilang/Absen (Opsional) -->
+            <div class="form-group" id="detail-section">
+                <label for="catatan">Nama Santri & Keterangan</label>
+                <textarea id="catatan" name="catatan" rows="4" placeholder="Contoh: &#10;1. Ahmad - Pulang (Izin)&#10;2. Zaky - Sakit di UKS"></textarea>
+            </div>
+
+            <!-- Tombol Kirim -->
+            <button type="submit" class="btn-submit">Kirim Laporan</button>
+
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
