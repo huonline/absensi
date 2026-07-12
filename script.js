@@ -10,7 +10,6 @@ const firebaseConfig = {
   storageBucket: "admin-hu-874c2.firebasestorage.app",
   messagingSenderId: "419870283564",
   appId: "1:419870283564:web:18054f24b31b52eb7b7e89",
-  measurementId: "G-BG04LH1DKD"
 };
 
 // Inisialisasi Firebase & Database
