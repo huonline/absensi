@@ -12,14 +12,14 @@
         <header class="header">
             <div class="nav-bar">
                 <h1>Master Data Santri Per Kobong</h1>
-                <a href="admin-umum.html" class="btn-nav">&larr; Kembali ke Dashboard</a>
+                <a href="super-admin.html" class="btn-nav">&larr; Kembali ke Dashboard</a>
             </div>
-            <p>Atur data santri berdasarkan nama kobong masing-masing</p>
+            <p>Atur data santri berdasarkan nama kobong (Tambah & Hapus Santri)</p>
         </header>
 
         <!-- FORM INPUT PER KOBONG -->
         <section class="admin-section">
-            <h2>Input Data Santri Per Kobong</h2>
+            <h2>Tambah / Update Data Santri Kobong</h2>
             <form id="form-santri-kobong">
                 <div class="form-group">
                     <label for="nama-kobong-input">Nama Kobong (Misal: A, B, JADID, QODIM):</label>
@@ -27,11 +27,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="daftar-santri-input">Daftar Nama Santri (Satu nama per baris):</label>
-                    <textarea id="daftar-santri-input" rows="6" placeholder="Contoh:&#10;Ahmad Subagja&#10;Zaky Mubarok&#10;Muhammad Ali" required></textarea>
+                    <label for="daftar-santri-input">Daftar Nama Santri Baru / Lengkap (1 Nama Per Baris):</label>
+                    <textarea id="daftar-santri-input" rows="6" placeholder="Contoh:&#10;Ahmad Subagja&#10;Zaky Mubarok" required></textarea>
                 </div>
 
-                <button type="submit" class="btn-submit">Simpan Ke Kobong Ini</button>
+                <button type="submit" class="btn-submit">Simpan / Tambah ke Kobong</button>
             </form>
         </section>
 
@@ -40,7 +40,7 @@
         <!-- DISPLAY DAFTAR SANTRI PER KOBONG -->
         <section class="admin-section">
             <h2>Daftar Santri Terdata Per Kobong</h2>
-            <div id="container-daftar-kobong" class="master-santri-box">
+            <div id="container-daftar-kobong">
                 <p class="text-center">Memuat data santri per kobong...</p>
             </div>
         </section>
