@@ -3,33 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelola Data Santri - Super Admin</title>
+    <title>Kelola Data Santri Per Kobong</title>
     <link rel="stylesheet" href="style.css">
-    
 </head>
 <body>
 
     <div class="container container-large">
         <header class="header">
             <div class="nav-bar">
-                <h1>Data Master Santri</h1>
-                <a href="admin-umum.html" class="btn-nav">&larr; Kembali ke Dashboard</a>
+                <h1>Master Data Santri Per Kobong</h1>
+                <a href="super-admin.html" class="btn-nav">&larr; Kembali ke Dashboard</a>
             </div>
-            <p>Kelola daftar nama santri per kobong (Salin & Tempel dari Excel)</p>
+            <p>Atur data santri berdasarkan nama kobong masing-masing</p>
         </header>
 
+        <!-- FORM INPUT PER KOBONG -->
         <section class="admin-section">
-            <form id="form-excel">
+            <h2>Input Data Santri Per Kobong</h2>
+            <form id="form-santri-kobong">
                 <div class="form-group">
-                    <label for="data-excel">Paste Data Santri Dari Excel:</label>
-                    <textarea id="data-excel" rows="8" placeholder="Contoh:&#10;KOBONG JADID (Total 20):&#10;1. Ahmad&#10;2. Zaky&#10;&#10;KOBONG QODIM (Total 18):&#10;1. Budi"></textarea>
+                    <label for="nama-kobong-input">Nama Kobong (Misal: A, B, JADID, QODIM):</label>
+                    <input type="text" id="nama-kobong-input" placeholder="Contoh: JADID" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                 </div>
-                <button type="submit" class="btn-submit">Simpan Data Santri</button>
-            </form>
 
-            <div class="master-santri-box">
-                <h3>Daftar Santri Terdaftar Saat Ini:</h3>
-                <pre id="display-santri">Belum ada data santri yang disimpan.</pre>
+                <div class="form-group">
+                    <label for="daftar-santri-input">Daftar Nama Santri (Satu nama per baris):</label>
+                    <textarea id="daftar-santri-input" rows="6" placeholder="Contoh:&#10;Ahmad Subagja&#10;Zaky Mubarok&#10;Muhammad Ali" required></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Simpan Ke Kobong Ini</button>
+            </form>
+        </section>
+
+        <hr class="divider">
+
+        <!-- DISPLAY DAFTAR SANTRI PER KOBONG -->
+        <section class="admin-section">
+            <h2>Daftar Santri Terdata Per Kobong</h2>
+            <div id="container-daftar-kobong" class="master-santri-box">
+                <p class="text-center">Memuat data santri per kobong...</p>
             </div>
         </section>
     </div>
