@@ -4,17 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin - Monitoring Absensi</title>
-    <!-- Pemanggilan Manifest PWA untuk Layar Utama Android -->
-<link rel="manifest" href="manifest.json">
+    
+    <link rel="icon" type="image/jpeg" href="LOGO%20HU%20NEW.jpg">
+    <link rel="apple-touch-icon" href="LOGO%20HU%20NEW.jpg">
+    <link rel="manifest" href="manifest.json">
 
-<!-- Meta tag tambahan untuk memaksa Android membaca ikon -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="application-name" content="Absensi Santri">
-
-<!-- Favicon Cadangan -->
-<link rel="icon" type="image/jpeg" href="LOGO%20HU%20NEW.jpg">
-<link rel="apple-touch-icon" href="LOGO%20HU%20NEW.jpg">
     <link rel="stylesheet" href="style.css">
     <!-- Chart.js CDN untuk Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -33,7 +27,7 @@
 
         <!-- SEKSI 1: GRAFIK PERSENTASE KEHADIRAN PER KOBONG -->
         <section class="admin-section">
-            <h2>Persentase Kehadiran Per Kobong (Bulan Ini)</h2>
+            <h2>Persentase Kehadiran Per Kobong</h2>
             <div class="chart-box">
                 <canvas id="grafikKehadiran"></canvas>
             </div>
@@ -43,7 +37,18 @@
 
         <!-- SEKSI 2: LAPORAN MASUK DARI KOBONG -->
         <section class="admin-section">
-            <h2>Laporan Kehadiran Masuk</h2>
+            <div class="nav-bar" style="margin-bottom: 15px;">
+                <h2>Laporan Kehadiran Masuk</h2>
+                
+                <!-- DROPDOWN FILTER KOBONG -->
+                <div class="filter-box">
+                    <label for="filter-kobong" style="font-weight: 600; font-size: 0.9rem;">Filter Kobong: </label>
+                    <select id="filter-kobong" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32;">
+                        <option value="ALL">-- Semua Kobong --</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
