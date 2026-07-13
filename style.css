@@ -267,3 +267,43 @@ textarea {
     max-height: 320px;
     margin-top: 15px;
 }
+
+/* --- STYLING TOMBOL HAPUS SANTRI & KOBONG --- */
+.btn-delete-santri {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.btn-delete-santri:hover {
+    background: #ef5350;
+    color: #fff;
+}
+
+.btn-delete-kobong {
+    background: #d32f2f;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    float: right;
+}
+
+.btn-delete-kobong:hover {
+    background: #b71c1c;
+}
+
+.santri-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px dashed #eee;
+}
