@@ -35,12 +35,19 @@
 
         <hr class="divider">
 
-      <!-- SEKSI 2: LAPORAN MASUK DARI KOBONG -->
+     <!-- SEKSI 2: LAPORAN MASUK DARI KOBONG -->
 <section class="admin-section">
-    <div class="nav-bar" style="margin-bottom: 15px;">
-        <h2>Laporan</h2>
+    <!-- 1. Judul Laporan -->
+    <h2>Laporan</h2>
+
+    <!-- 2. Dropdown Filter (Di Bawah Judul Laporan) -->
+    <div class="filter-box" style="margin-top: 10px; margin-bottom: 15px;">
+        <select id="filter-kobong" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32; cursor: pointer;">
+            <option value="ALL">-- Lihat Semua Kobong --</option>
+        </select>
     </div>
 
+    <!-- 3. Tabel Data Laporan (Di Bawah Filter) -->
     <div class="table-responsive">
         <table class="data-table">
             <thead>
@@ -58,13 +65,6 @@
                 </tr>
             </tbody>
         </table>
-    </div>
-
-    <!-- Filter pindah ke sini dan labelnya dihilangkan -->
-    <div class="filter-box" style="margin-top: 20px;">
-        <select id="filter-kobong" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32; cursor: pointer;">
-            <option value="ALL">-- Lihat Semua Kobong --</option>
-        </select>
     </div>
 </section>
 
