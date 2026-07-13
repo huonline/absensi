@@ -68,36 +68,75 @@ if (formAbsensi) {
 }
 
 // -----------------------------------------------------------
-// 2. SUPER ADMIN (Tabel & Grafik)
+// 2. SUPER ADMIN (Tabel dengan Filter & Grafik)
 // -----------------------------------------------------------
 const tabelLaporan = document.getElementById('tabel-laporan');
+const filterKobong = document.getElementById('filter-kobong');
 let chartKehadiran = null;
+let rawLaporanData = []; // Menyimpan temporary data laporan
 
 if (tabelLaporan) {
     const q = query(collection(db, "laporan_absensi"), orderBy("createdAt", "desc"));
 
     onSnapshot(q, (snapshot) => {
-        tabelLaporan.innerHTML = '';
-
-        if (snapshot.empty) {
-            tabelLaporan.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada laporan masuk.</td></tr>`;
-            return;
-        }
-
-        const rekapKobong = {};
+        rawLaporanData = [];
+        const setKobong = new Set();
 
         snapshot.forEach((docSnap) => {
-            const item = docSnap.data();
-            const docId = docSnap.id;
-            const isApproved = item.status_konfirmasi === 'Approved';
+            const data = docSnap.data();
+            data.id = docSnap.id;
+            rawLaporanData.push(data);
 
-            if (!rekapKobong[item.kobong]) {
-                rekapKobong[item.kobong] = { total: 0, lengkap: 0 };
+            if (data.kobong) {
+                setKobong.add(data.kobong);
             }
-            rekapKobong[item.kobong].total += 1;
-            if (item.status === 'Lengkap') {
-                rekapKobong[item.kobong].lengkap += 1;
-            }
+        });
+
+        // 1. Update Pilihan Dropdown Filter secara Otomatis
+        if (filterKobong) {
+            const selectedVal = filterKobong.value;
+            filterKobong.innerHTML = `<option value="ALL">-- Semua Kobong --</option>`;
+            
+            Array.from(setKobong).sort().forEach(namaKobong => {
+                const opt = document.createElement('option');
+                opt.value = namaKobong;
+                opt.innerText = `Kobong ${namaKobong}`;
+                filterKobong.appendChild(opt);
+            });
+
+            filterKobong.value = selectedVal; // Pertahankan pilihan user
+        }
+
+        // 2. Render Tabel dan Grafik
+        renderTabelDanGrafik();
+    });
+
+    // Event Listener saat Dropdown Filter Diganti
+    if (filterKobong) {
+        filterKobong.addEventListener('change', () => {
+            renderTabelDanGrafik();
+        });
+    }
+}
+
+// FUNGSI RENDER TABEL & GRAFIK
+function renderTabelDanGrafik() {
+    if (!tabelLaporan) return;
+
+    tabelLaporan.innerHTML = '';
+    const selectedFilter = filterKobong ? filterKobong.value : 'ALL';
+
+    // Filter data berdasarkan pilihan kobong
+    const filteredData = rawLaporanData.filter(item => {
+        if (selectedFilter === 'ALL') return true;
+        return item.kobong === selectedFilter;
+    });
+
+    if (filteredData.length === 0) {
+        tabelLaporan.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada laporan untuk kobong ini.</td></tr>`;
+    } else {
+        filteredData.forEach((item) => {
+            const isApproved = item.status_konfirmasi === 'Approved';
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -108,66 +147,28 @@ if (tabelLaporan) {
                 <td>
                     ${isApproved 
                         ? `<span class="status-approved">✓ Terkonfirmasi</span>` 
-                        : `<button class="btn-approve" onclick="konfirmasiLaporan('${docId}')">Konfirmasi</button>`
+                        : `<button class="btn-approve" onclick="konfirmasiLaporan('${item.id}')">Konfirmasi</button>`
                     }
                 </td>
             `;
             tabelLaporan.appendChild(row);
         });
-
-        renderChart(rekapKobong);
-    });
-}
-
-function renderChart(rekapKobong) {
-    const ctx = document.getElementById('grafikKehadiran');
-    if (!ctx) return;
-
-    const labels = Object.keys(rekapKobong);
-    const dataPersentase = labels.map(k => {
-        const total = rekapKobong[k].total;
-        const lengkap = rekapKobong[k].lengkap;
-        return Math.round((lengkap / total) * 100);
-    });
-
-    if (chartKehadiran) {
-        chartKehadiran.destroy();
     }
 
-    chartKehadiran = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels.map(l => `Kobong ${l}`),
-            datasets: [{
-                label: 'Persentase Kehadiran (%)',
-                data: dataPersentase,
-                backgroundColor: '#2e7d32',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { callback: value => value + '%' }
-                }
-            }
+    // Hitung Rekap Keseluruhan untuk Grafik (Grafik tetap menampilkan semua kobong)
+    const rekapKobong = {};
+    rawLaporanData.forEach(item => {
+        if (!rekapKobong[item.kobong]) {
+            rekapKobong[item.kobong] = { total: 0, lengkap: 0 };
+        }
+        rekapKobong[item.kobong].total += 1;
+        if (item.status === 'Lengkap') {
+            rekapKobong[item.kobong].lengkap += 1;
         }
     });
-}
 
-window.konfirmasiLaporan = async function(docId) {
-    try {
-        await updateDoc(doc(db, "laporan_absensi", docId), {
-            status_konfirmasi: 'Approved'
-        });
-    } catch (err) {
-        alert('Gagal mengonfirmasi: ' + err.message);
-    }
-};
+    renderChart(rekapKobong);
+}
 
 // -----------------------------------------------------------
 // 3. PAGE DATA SANTRI (Tambah & Hapus Santri/Kobong)
