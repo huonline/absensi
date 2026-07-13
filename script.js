@@ -177,32 +177,62 @@ window.konfirmasiLaporan = async function(docId) {
 };
 
 // -----------------------------------------------------------
-// 3. PAGE DATA SANTRI (Simpan ke Dokumen Firestore 'master/santri')
+// 3. PAGE DATA SANTRI (Simpan ke Koleksi 'master_santri' Per Kobong)
 // -----------------------------------------------------------
-const formExcel = document.getElementById('form-excel');
-const displaySantri = document.getElementById('display-santri');
+const formSantriKobong = document.getElementById('form-santri-kobong');
+const containerDaftarKobong = document.getElementById('container-daftar-kobong');
 
-if (formExcel) {
-    formExcel.addEventListener('submit', async (e) => {
+if (formSantriKobong) {
+    // SIMPAN DATA SANTRI BERDASARKAN KOBONG
+    formSantriKobong.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const dataText = document.getElementById('data-excel').value;
+
+        const namaKobongInput = document.getElementById('nama-kobong-input').value.trim().toUpperCase();
+        const daftarSantriRaw = document.getElementById('daftar-santri-input').value.trim();
+
+        // Ubah teks per baris menjadi Array Nama
+        const listSantri = daftarSantriRaw.split('\n').map(nama => nama.trim()).filter(nama => nama !== '');
 
         try {
-            await setDoc(doc(db, "master", "santri"), {
-                data: dataText
+            // Simpan Dokumen dengan ID Nama Kobong (Misal dokumen ID: 'JADID')
+            await setDoc(doc(db, "master_santri", namaKobongInput), {
+                nama_kobong: namaKobongInput,
+                jumlah_anggota: listSantri.length,
+                anggota: listSantri,
+                updatedAt: new Date()
             });
-            alert('Data Santri berhasil disimpan!');
+
+            alert(`Data santri untuk Kobong ${namaKobongInput} berhasil disimpan (${listSantri.length} santri)!`);
+            formSantriKobong.reset();
         } catch (err) {
-            alert('Gagal menyimpan: ' + err.message);
+            alert('Gagal menyimpan data: ' + err.message);
         }
     });
 
-    // Read Data Santri
-    onSnapshot(doc(db, "master", "santri"), (docSnap) => {
-        if (docSnap.exists()) {
-            displaySantri.innerText = docSnap.data().data;
-        } else {
-            displaySantri.innerText = 'Belum ada data santri.';
+    // BACA REALTIME DAFTAR SANTRI SEMUA KOBONG
+    onSnapshot(collection(db, "master_santri"), (snapshot) => {
+        containerDaftarKobong.innerHTML = '';
+
+        if (snapshot.empty) {
+            containerDaftarKobong.innerHTML = '<p class="text-center">Belum ada data santri yang dimasukkan.</p>';
+            return;
         }
+
+        snapshot.forEach((docSnap) => {
+            const dataKobong = docSnap.data();
+            
+            const boxKobong = document.createElement('div');
+            boxKobong.style.cssText = "margin-bottom: 16px; padding: 12px; background: #fff; border: 1px solid #c8e6c9; border-radius: 8px;";
+
+            let listHTML = `<h3 style="color: #2e7d32; margin-bottom: 8px;">Kobong ${dataKobong.nama_kobong} (${dataKobong.jumlah_anggota} Santri)</h3><ol style="padding-left: 20px; font-size: 0.9rem;">`;
+
+            dataKobong.anggota.forEach(nama => {
+                listHTML += `<li>${nama}</li>`;
+            });
+
+            listHTML += `</ol>`;
+            boxKobong.innerHTML = listHTML;
+            containerDaftarKobong.appendChild(boxKobong);
+        });
     });
 }
