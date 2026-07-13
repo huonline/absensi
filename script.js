@@ -1,4 +1,3 @@
-// Import Firestore SDK via CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
     getFirestore, 
@@ -8,11 +7,14 @@ import {
     doc, 
     updateDoc, 
     setDoc, 
+    deleteDoc,
+    getDoc,
+    arrayUnion,
+    arrayRemove,
     query, 
     orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Configuration Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyClHDzTGncpd_5-Gnc4zmL3JVrXX1tiGKQ",
     authDomain: "admin-hu-874c2.firebaseapp.com",
@@ -22,7 +24,6 @@ const firebaseConfig = {
     appId: "1:419870283564:web:18054f24b31b52eb7b7e89"
 };
 
-// Inisialisasi Firebase & Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -36,7 +37,7 @@ if (headerTitle) {
 }
 
 // -----------------------------------------------------------
-// 1. ADMIN KOBONG (Form Laporan - Simpan ke Koleksi 'laporan_absensi')
+// 1. ADMIN KOBONG (Form Laporan)
 // -----------------------------------------------------------
 const formAbsensi = document.getElementById('form-absensi');
 if (formAbsensi) {
@@ -67,16 +68,14 @@ if (formAbsensi) {
 }
 
 // -----------------------------------------------------------
-// 2. SUPER ADMIN (Tabel Laporan & Grafik)
+// 2. SUPER ADMIN (Tabel & Grafik)
 // -----------------------------------------------------------
 const tabelLaporan = document.getElementById('tabel-laporan');
 let chartKehadiran = null;
 
 if (tabelLaporan) {
-    // Query Firestore: Urutkan dari laporan terbaru
     const q = query(collection(db, "laporan_absensi"), orderBy("createdAt", "desc"));
 
-    // Realtime Listener Firestore
     onSnapshot(q, (snapshot) => {
         tabelLaporan.innerHTML = '';
 
@@ -92,7 +91,6 @@ if (tabelLaporan) {
             const docId = docSnap.id;
             const isApproved = item.status_konfirmasi === 'Approved';
 
-            // Hitung Rekap untuk Grafik
             if (!rekapKobong[item.kobong]) {
                 rekapKobong[item.kobong] = { total: 0, lengkap: 0 };
             }
@@ -101,7 +99,6 @@ if (tabelLaporan) {
                 rekapKobong[item.kobong].lengkap += 1;
             }
 
-            // Render Tabel
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
@@ -118,12 +115,10 @@ if (tabelLaporan) {
             tabelLaporan.appendChild(row);
         });
 
-        // Render Grafik
         renderChart(rekapKobong);
     });
 }
 
-// Render Grafik Chart.js
 function renderChart(rekapKobong) {
     const ctx = document.getElementById('grafikKehadiran');
     if (!ctx) return;
@@ -164,11 +159,9 @@ function renderChart(rekapKobong) {
     });
 }
 
-// Fungsi Konfirmasi Document Firestore
 window.konfirmasiLaporan = async function(docId) {
     try {
-        const docRef = doc(db, "laporan_absensi", docId);
-        await updateDoc(docRef, {
+        await updateDoc(doc(db, "laporan_absensi", docId), {
             status_konfirmasi: 'Approved'
         });
     } catch (err) {
@@ -177,39 +170,48 @@ window.konfirmasiLaporan = async function(docId) {
 };
 
 // -----------------------------------------------------------
-// 3. PAGE DATA SANTRI (Simpan ke Koleksi 'master_santri' Per Kobong)
+// 3. PAGE DATA SANTRI (Tambah & Hapus Santri/Kobong)
 // -----------------------------------------------------------
 const formSantriKobong = document.getElementById('form-santri-kobong');
 const containerDaftarKobong = document.getElementById('container-daftar-kobong');
 
 if (formSantriKobong) {
-    // SIMPAN DATA SANTRI BERDASARKAN KOBONG
+    // SIMPAN / TAMBAH SANTRI BARU
     formSantriKobong.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const namaKobongInput = document.getElementById('nama-kobong-input').value.trim().toUpperCase();
         const daftarSantriRaw = document.getElementById('daftar-santri-input').value.trim();
+        const listSantriBaru = daftarSantriRaw.split('\n').map(nama => nama.trim()).filter(nama => nama !== '');
 
-        // Ubah teks per baris menjadi Array Nama
-        const listSantri = daftarSantriRaw.split('\n').map(nama => nama.trim()).filter(nama => nama !== '');
+        const docRef = doc(db, "master_santri", namaKobongInput);
 
         try {
-            // Simpan Dokumen dengan ID Nama Kobong (Misal dokumen ID: 'JADID')
-            await setDoc(doc(db, "master_santri", namaKobongInput), {
-                nama_kobong: namaKobongInput,
-                jumlah_anggota: listSantri.length,
-                anggota: listSantri,
-                updatedAt: new Date()
-            });
+            const docSnap = await getDoc(docRef);
 
-            alert(`Data santri untuk Kobong ${namaKobongInput} berhasil disimpan (${listSantri.length} santri)!`);
+            if (docSnap.exists()) {
+                // Jika Kobong Sudah Ada: Gabungkan nama baru (arrayUnion)
+                await updateDoc(docRef, {
+                    anggota: arrayUnion(...listSantriBaru),
+                    updatedAt: new Date()
+                });
+            } else {
+                // Jika Kobong Baru: Buat dokumen baru
+                await setDoc(docRef, {
+                    nama_kobong: namaKobongInput,
+                    anggota: listSantriBaru,
+                    updatedAt: new Date()
+                });
+            }
+
+            alert(`Berhasil memperbarui data santri Kobong ${namaKobongInput}!`);
             formSantriKobong.reset();
         } catch (err) {
-            alert('Gagal menyimpan data: ' + err.message);
+            alert('Gagal menyimpan: ' + err.message);
         }
     });
 
-    // BACA REALTIME DAFTAR SANTRI SEMUA KOBONG
+    // DISPLAY REALTIME DAN TOMBOL HAPUS
     onSnapshot(collection(db, "master_santri"), (snapshot) => {
         containerDaftarKobong.innerHTML = '';
 
@@ -220,19 +222,61 @@ if (formSantriKobong) {
 
         snapshot.forEach((docSnap) => {
             const dataKobong = docSnap.data();
-            
+            const idKobong = docSnap.id;
+            const anggotaList = dataKobong.anggota || [];
+
             const boxKobong = document.createElement('div');
-            boxKobong.style.cssText = "margin-bottom: 16px; padding: 12px; background: #fff; border: 1px solid #c8e6c9; border-radius: 8px;";
+            boxKobong.className = 'master-santri-box';
+            boxKobong.style.marginBottom = '16px';
 
-            let listHTML = `<h3 style="color: #2e7d32; margin-bottom: 8px;">Kobong ${dataKobong.nama_kobong} (${dataKobong.jumlah_anggota} Santri)</h3><ol style="padding-left: 20px; font-size: 0.9rem;">`;
+            let listHTML = `
+                <div style="margin-bottom: 12px; overflow: hidden;">
+                    <button class="btn-delete-kobong" onclick="hapusKobong('${idKobong}')">Hapus Kobong</button>
+                    <h3 style="color: #2e7d32; margin: 0;">Kobong ${dataKobong.nama_kobong} (${anggotaList.length} Santri)</h3>
+                </div>
+                <div style="font-size: 0.9rem;">
+            `;
 
-            dataKobong.anggota.forEach(nama => {
-                listHTML += `<li>${nama}</li>`;
-            });
+            if (anggotaList.length === 0) {
+                listHTML += `<p style="color: #888;">Belum ada anggota di kobong ini.</p>`;
+            } else {
+                anggotaList.forEach((nama, index) => {
+                    listHTML += `
+                        <div class="santri-item">
+                            <span>${index + 1}. ${nama}</span>
+                            <button class="btn-delete-santri" onclick="hapusSantri('${idKobong}', '${nama}')">Hapus</button>
+                        </div>
+                    `;
+                });
+            }
 
-            listHTML += `</ol>`;
+            listHTML += `</div>`;
             boxKobong.innerHTML = listHTML;
             containerDaftarKobong.appendChild(boxKobong);
         });
     });
 }
+
+// FUNGSI HAPUS 1 SANTRI
+window.hapusSantri = async function(idKobong, namaSantri) {
+    if (confirm(`Yakin ingin menghapus ${namaSantri} dari Kobong ${idKobong}?`)) {
+        try {
+            await updateDoc(doc(db, "master_santri", idKobong), {
+                anggota: arrayRemove(namaSantri)
+            });
+        } catch (err) {
+            alert('Gagal menghapus santri: ' + err.message);
+        }
+    }
+};
+
+// FUNGSI HAPUS 1 KOBONG LENGKAP
+window.hapusKobong = async function(idKobong) {
+    if (confirm(`Yakin ingin MENGHAPUS SELURUH data Kobong ${idKobong}?`)) {
+        try {
+            await deleteDoc(doc(db, "master_santri", idKobong));
+        } catch (err) {
+            alert('Gagal menghapus kobong: ' + err.message);
+        }
+    }
+};
