@@ -20,20 +20,29 @@
             <p>Formulir Pelaporan Kehadiran Santri Harian</p>
         </header>
 
-        <!-- SEKSI INFORMASI ANGGOTA KOBONG -->
+        <!-- INFORMASI KETUA, WAKIL & ANGGOTA -->
         <section class="admin-section" style="margin-bottom: 20px;">
             <div id="info-kobong-box" style="background: #e8f5e9; padding: 12px 15px; border-radius: 8px; border: 1px solid #c8e6c9;">
-                <h3 style="margin: 0 0 6px 0; color: #2e7d32; font-size: 1rem;">Data Anggota Kobong</h3>
-                <p id="total-anggota" style="margin: 0; font-size: 0.85rem; color: #555;">Memuat data anggota...</p>
-                <div id="daftar-anggota-kobong" style="margin-top: 8px; font-size: 0.85rem; color: #333; max-height: 120px; overflow-y: auto;"></div>
+                <h3 style="margin: 0 0 6px 0; color: #2e7d32; font-size: 1rem;">Pengurus & Anggota Kobong</h3>
+                <div id="detail-pengurus" style="font-size: 0.9rem; color: #1b5e20; margin-bottom: 8px;">
+                    Memuat data pengurus...
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #a5d6a7; margin: 8px 0;">
+                <p id="total-anggota" style="margin: 0 0 4px 0; font-size: 0.85rem; font-weight: bold; color: #333;">Daftar Anggota:</p>
+                <div id="daftar-anggota-kobong" style="font-size: 0.85rem; color: #333; max-height: 120px; overflow-y: auto;"></div>
             </div>
         </section>
 
         <!-- FORMULIR INPUT LAPORAN -->
         <form id="form-absensi" class="form-absensi">
             <div class="form-group">
+                <label for="nama-pelapor">Nama Pelapor (Ketua / Wakil):</label>
+                <input type="text" id="nama-pelapor" placeholder="Masukkan nama pelapor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            </div>
+
+            <div class="form-group">
                 <label for="waktu">Waktu Absensi:</label>
-                <select id="waktu" name="waktu" required>
+                <select id="waktu" name="waktu" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     <option value="">-- Pilih Waktu --</option>
                     <option value="Subuh">Subuh</option>
                     <option value="Maghrib">Maghrib</option>
@@ -57,7 +66,7 @@
             </div>
 
             <div class="form-group">
-                <label for="catatan">Catatan / Nama Santri Tidak Hadir:</label>
+                <label for="catatan">Keterangan (Nama Santri Keterangan Tidak Hadir):</label>
                 <textarea id="catatan" name="catatan" rows="3" placeholder="Contoh: Ahmad (Sakit), Budi (Izin Pulang)"></textarea>
             </div>
 
@@ -74,14 +83,15 @@
                     <thead>
                         <tr>
                             <th>Waktu</th>
+                            <th>Kobong</th>
+                            <th>Nama</th>
+                            <th>Ket</th>
                             <th>Status</th>
-                            <th>Catatan</th>
-                            <th>Konfirmasi</th>
                         </tr>
                     </thead>
                     <tbody id="tabel-riwayat-kobong">
                         <tr>
-                            <td colspan="4" class="text-center">Memuat riwayat laporan...</td>
+                            <td colspan="5" class="text-center">Memuat riwayat laporan...</td>
                         </tr>
                     </tbody>
                 </table>
