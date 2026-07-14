@@ -143,13 +143,13 @@ if (formAbsensi) {
             } else {
                 listData.forEach((item) => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-                        <td><strong>Kobong ${item.kobong}</strong></td>
-                        <td>${item.nama || '-'}</td>
-                        <td>${item.catatan ? item.catatan.replace(/\n/g, '<br>') : '-'}</td>
-                        <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
-                    `;
+                   row.innerHTML = `
+    <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
+    <td><strong>Kobong ${item.kobong}</strong></td>
+    <td>${item.nama || '-'}</td>
+    <td style="white-space: pre-line;">${item.catatan || '-'}</td>
+    <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
+`;
                     tabelRiwayatKobong.appendChild(row);
                 });
             }
@@ -222,13 +222,13 @@ function renderTabelDanGrafik() {
     } else {
         filteredData.forEach((item) => {
             const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-                <td><strong>Kobong ${item.kobong}</strong></td>
-                <td>${item.nama || '-'}</td>
-                <td>${item.catatan ? item.catatan.replace(/\n/g, '<br>') : '-'}</td>
-                <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
-            `;
+           row.innerHTML = `
+    <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
+    <td><strong>Kobong ${item.kobong}</strong></td>
+    <td>${item.nama || '-'}</td>
+    <td style="white-space: pre-line;">${item.catatan || '-'}</td>
+    <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
+`;
             tabelLaporan.appendChild(row);
         });
     }
