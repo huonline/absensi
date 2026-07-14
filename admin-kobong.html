@@ -3,71 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Santri</title>
-
-  <!-- Pemanggilan Manifest PWA untuk Layar Utama Android -->
-<link rel="manifest" href="manifest.json">
-
-<!-- Meta tag tambahan untuk memaksa Android membaca ikon -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="application-name" content="Absensi Santri">
-
-<!-- Favicon Cadangan -->
-<link rel="icon" type="image/jpeg" href="LOGO%20HU%20NEW.jpg">
-<link rel="apple-touch-icon" href="LOGO%20HU%20NEW.jpg">
+    <title>Laporan Absensi Kobong</title>
+    
+    <link rel="icon" type="image/jpeg" href="LOGO%20HU%20NEW.jpg">
+    <link rel="apple-touch-icon" href="LOGO%20HU%20NEW.jpg">
+    <link rel="manifest" href="manifest.json">
 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="container">
-        <!-- Header -->
+        <!-- Header Kobong -->
         <header class="header">
             <h1 id="nama-kobong">Laporan Absensi Kobong</h1>
-            <p>seluruh ketua kobong wajib mengisi absensi pada waktu yang telah ditentukan!!!</p>
+            <p>Formulir Pelaporan Kehadiran Santri Harian</p>
         </header>
 
-        <!-- Form Laporan -->
-        <form id="form-absensi">
-            
-            <!-- Waktu Laporan -->
+        <!-- SEKSI INFORMASI ANGGOTA KOBONG -->
+        <section class="admin-section" style="margin-bottom: 20px;">
+            <div id="info-kobong-box" style="background: #e8f5e9; padding: 12px 15px; border-radius: 8px; border: 1px solid #c8e6c9;">
+                <h3 style="margin: 0 0 6px 0; color: #2e7d32; font-size: 1rem;">Data Anggota Kobong</h3>
+                <p id="total-anggota" style="margin: 0; font-size: 0.85rem; color: #555;">Memuat data anggota...</p>
+                <div id="daftar-anggota-kobong" style="margin-top: 8px; font-size: 0.85rem; color: #333; max-height: 120px; overflow-y: auto;"></div>
+            </div>
+        </section>
+
+        <!-- FORMULIR INPUT LAPORAN -->
+        <form id="form-absensi" class="form-absensi">
             <div class="form-group">
-                <label for="waktu">Waktu Laporan</label>
+                <label for="waktu">Waktu Absensi:</label>
                 <select id="waktu" name="waktu" required>
-                    <option value="" disabled selected>-- Pilih Waktu --</option>
-                    <option value="Pagi">Subuh / Pagi</option>
-                    <option value="Malam">Malam</option>
+                    <option value="">-- Pilih Waktu --</option>
+                    <option value="Subuh">Subuh</option>
+                    <option value="Maghrib">Maghrib</option>
+                    <option value="Isya">Isya</option>
+                    <option value="Malam (Tidur)">Malam (Tidur)</option>
                 </select>
             </div>
 
-            <!-- Status Kehadiran -->
             <div class="form-group">
-                <label>Status Anggota Kobong</label>
+                <label>Status Kehadiran:</label>
                 <div class="radio-group">
                     <label class="radio-label">
-                        <input type="radio" name="status" value="Lengkap" required>
-                        <span>Lengkap / Full</span>
+                        <input type="radio" name="status" value="Lengkap" checked>
+                        <span>Lengkap (Hadir Semua)</span>
                     </label>
                     <label class="radio-label">
-                        <input type="radio" name="status" value="Tidak Lengkap" required>
-                        <span>keterangan</span>
+                        <input type="radio" name="status" value="Tidak Lengkap">
+                        <span>Ada Yang Tidak Hadir</span>
                     </label>
                 </div>
             </div>
 
-            <!-- Detail Santri Hilang/Absen (Opsional) -->
-            <div class="form-group" id="detail-section">
-                <label for="catatan">Nama Santri & Keterangan</label>
-                <textarea id="catatan" name="catatan" rows="4" placeholder="Contoh: &#10;1. Ahmad - Pulang (Izin)&#10;2. Zaky - Sakit di UKS"></textarea>
+            <div class="form-group">
+                <label for="catatan">Catatan / Nama Santri Tidak Hadir:</label>
+                <textarea id="catatan" name="catatan" rows="3" placeholder="Contoh: Ahmad (Sakit), Budi (Izin Pulang)"></textarea>
             </div>
 
-            <!-- Tombol Kirim -->
             <button type="submit" class="btn-submit">Kirim Laporan</button>
-
         </form>
+
+        <hr class="divider">
+
+        <!-- RIWAYAT LAPORAN KOBONG INI -->
+        <section class="admin-section">
+            <h2 style="font-size: 1.1rem; margin-bottom: 10px;">Riwayat Laporan Kobong Ini</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Status</th>
+                            <th>Catatan</th>
+                            <th>Konfirmasi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-riwayat-kobong">
+                        <tr>
+                            <td colspan="4" class="text-center">Memuat riwayat laporan...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
-<script type="module" src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
