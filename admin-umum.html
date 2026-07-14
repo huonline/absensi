@@ -10,18 +10,15 @@
     <link rel="manifest" href="manifest.json">
 
     <link rel="stylesheet" href="style.css">
-    <!-- Chart.js CDN untuk Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-   <div class="container container-large">
-        <!-- HEADER & NAVIGASI -->
+    <div class="container container-large">
         <header class="header">
             <h1>Dashboard Super Admin</h1>
-            <p>Pusat Monitoring, Grafik Persentase & Konfirmasi Absensi</p>
+            <p>Pusat Monitoring & Grafik Persentase Absensi Santri</p>
             
-            <!-- TOMBOL KELOLA DATA SANTRI (DI BAWAH JUDUL / SUB-JUDUL) -->
             <div style="margin-top: 12px;">
                 <a href="data-santri.html" class="btn-nav" style="display: inline-block; width: 100%; text-align: center; box-sizing: border-box; padding: 10px;">
                     Kelola Data Santri &rarr;
@@ -29,7 +26,7 @@
             </div>
         </header>
 
-        <!-- SEKSI 1: GRAFIK PERSENTASE KEHADIRAN PER KOBONG -->
+        <!-- SEKSI 1: GRAFIK PERSENTASE -->
         <section class="admin-section">
             <h2>Persentase</h2>
             <div class="chart-box">
@@ -39,38 +36,36 @@
 
         <hr class="divider">
 
-     <!-- SEKSI 2: LAPORAN MASUK DARI KOBONG -->
-<section class="admin-section">
-    <!-- 1. Judul Laporan -->
-    <h2>Laporan</h2>
+        <!-- SEKSI 2: LAPORAN MASUK -->
+        <section class="admin-section">
+            <h2>Laporan</h2>
 
-    <!-- 2. Dropdown Filter (Di Bawah Judul Laporan) -->
-    <div class="filter-box" style="margin-top: 10px; margin-bottom: 15px;">
-        <select id="filter-kobong" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32; cursor: pointer;">
-            <option value="ALL">-- Lihat Semua Kobong --</option>
-        </select>
-    </div>
+            <div class="filter-box" style="margin-top: 10px; margin-bottom: 15px;">
+                <select id="filter-kobong" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32; cursor: pointer;">
+                    <option value="ALL">-- Lihat Semua Kobong --</option>
+                </select>
+            </div>
 
-    <!-- 3. Tabel Data Laporan (Di Bawah Filter) -->
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Kobong</th>
-                    <th>Status</th>
-                    <th>Ket</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="tabel-laporan">
-                <tr>
-                    <td colspan="5" class="text-center">Memuat data laporan...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</section>
+            <!-- TABEL DENGAN KOLOM: Waktu | Kobong | Nama | Ket | Status -->
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Kobong</th>
+                            <th>Nama</th>
+                            <th>Ket</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-laporan">
+                        <tr>
+                            <td colspan="5" class="text-center">Memuat data laporan...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     </div>
 
