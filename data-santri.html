@@ -4,34 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Data Santri Per Kobong</title>
+    
+    <link rel="icon" type="image/jpeg" href="LOGO%20HU%20NEW.jpg">
+    <link rel="apple-touch-icon" href="LOGO%20HU%20NEW.jpg">
+    <link rel="manifest" href="manifest.json">
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="container container-large">
         <header class="header">
-            <div class="nav-bar">
-                <h1>Master Data Santri Per Kobong</h1>
-                <a href="admin-umum.html" class="btn-nav">&larr; Kembali ke Dashboard</a>
+            <h1>Master Data Santri Per Kobong</h1>
+            <p>Atur data Ketua, Wakil, dan Anggota Santri berdasarkan nama kobong</p>
+            
+            <div style="margin-top: 12px;">
+                <a href="super-admin.html" class="btn-nav" style="display: inline-block; width: 100%; text-align: center; box-sizing: border-box; padding: 10px;">
+                    &larr; Kembali ke Dashboard Super Admin
+                </a>
             </div>
-            <p>Atur data santri berdasarkan nama kobong (Tambah & Hapus Santri)</p>
         </header>
 
         <!-- FORM INPUT PER KOBONG -->
         <section class="admin-section">
-            <h2>Tambah / Update Data Santri Kobong</h2>
+            <h2>Tambah / Update Data Kobong</h2>
             <form id="form-santri-kobong">
                 <div class="form-group">
-                    <label for="nama-kobong-input">Nama Kobong (Misal: A, B, JADID, QODIM):</label>
-                    <input type="text" id="nama-kobong-input" placeholder="Contoh: JADID" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                    <label for="nama-kobong-input">Nama Kobong (Misal: 1A, JADID, QODIM):</label>
+                    <input type="text" id="nama-kobong-input" placeholder="Contoh: 1A" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                 </div>
 
                 <div class="form-group">
-                    <label for="daftar-santri-input">Daftar Nama Santri Baru / Lengkap (1 Nama Per Baris):</label>
-                    <textarea id="daftar-santri-input" rows="6" placeholder="Contoh:&#10;Ahmad Subagja&#10;Zaky Mubarok" required></textarea>
+                    <label for="ketua-input">Nama Ketua Kobong:</label>
+                    <input type="text" id="ketua-input" placeholder="Nama Ketua" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                 </div>
 
-                <button type="submit" class="btn-submit">Simpan / Tambah ke Kobong</button>
+                <div class="form-group">
+                    <label for="wakil-input">Nama Wakil Ketua Kobong:</label>
+                    <input type="text" id="wakil-input" placeholder="Nama Wakil" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                </div>
+
+                <div class="form-group">
+                    <label for="daftar-santri-input">Daftar Anggota Santri (1 Nama Per Baris):</label>
+                    <textarea id="daftar-santri-input" rows="5" placeholder="Contoh:&#10;Ahmad Subagja&#10;Zaky Mubarok" required></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Simpan Data Kobong</button>
             </form>
         </section>
 
@@ -39,9 +57,9 @@
 
         <!-- DISPLAY DAFTAR SANTRI PER KOBONG -->
         <section class="admin-section">
-            <h2>Daftar Santri Terdata Per Kobong</h2>
+            <h2>Daftar Terdata Per Kobong</h2>
             <div id="container-daftar-kobong">
-                <p class="text-center">Memuat data santri per kobong...</p>
+                <p class="text-center">Memuat data kobong...</p>
             </div>
         </section>
     </div>
