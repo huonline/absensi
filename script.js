@@ -402,3 +402,45 @@ window.hapusKobong = async function(idKobong) {
         }
     }
 };
+
+// -----------------------------------------------------------
+// FUNGSI SALIN REKAP UNTUK RAPAT / WHATSAPP
+// -----------------------------------------------------------
+window.salinRekapTeks = function() {
+    if (!rawLaporanData || rawLaporanData.length === 0) {
+        alert('Belum ada data laporan untuk disalin!');
+        return;
+    }
+
+    const rekapKobong = {};
+    rawLaporanData.forEach(item => {
+        if (!rekapKobong[item.kobong]) {
+            rekapKobong[item.kobong] = { total: 0, lengkap: 0 };
+        }
+        rekapKobong[item.kobong].total += 1;
+        if (item.status === 'Lengkap') {
+            rekapKobong[item.kobong].lengkap += 1;
+        }
+    });
+
+    let teksRekap = `*REKAP ABSENSI KOBONG SANTRI*\n`;
+    teksRekap += `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}\n`;
+    teksRekap += `=============================\n\n`;
+
+    const sortedKobong = Object.keys(rekapKobong).sort();
+    sortedKobong.forEach(k => {
+        const total = rekapKobong[k].total;
+        const lengkap = rekapKobong[k].lengkap;
+        const persen = Math.round((lengkap / total) * 100);
+        teksRekap += `• *Kobong ${k}*: ${persen}% (${lengkap}/${total} Laporan Lengkap)\n`;
+    });
+
+    teksRekap += `\n=============================\n`;
+    teksRekap += `_Dicetak otomatis dari Sistem Absensi Santri_`;
+
+    navigator.clipboard.writeText(teksRekap).then(() => {
+        alert('Ringkasan Rekap Kehadiran berhasil disalin!\nBisa langsung di-paste ke WhatsApp / Catatan Rapat.');
+    }).catch(err => {
+        alert('Gagal menyalin: ' + err.message);
+    });
+};
