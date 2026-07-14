@@ -15,7 +15,6 @@ import {
     orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Configuration Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyClHDzTGncpd_5-Gnc4zmL3JVrXX1tiGKQ",
     authDomain: "admin-hu-874c2.firebaseapp.com",
@@ -25,18 +24,16 @@ const firebaseConfig = {
     appId: "1:419870283564:web:18054f24b31b52eb7b7e89"
 };
 
-// Inisialisasi Firebase & Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // -----------------------------------------------------------
-// BACA PARAMETER URL KOBONG (DITARUH DI PALING ATAS)
+// BACA PARAMETER URL KOBONG
 // -----------------------------------------------------------
 const urlParams = new URLSearchParams(window.location.search);
 const rawKobong = urlParams.get('kobong') || '';
 const namaKobong = decodeURIComponent(rawKobong).trim().toUpperCase();
 
-// Update Judul Header
 const headerTitle = document.getElementById('nama-kobong');
 if (headerTitle) {
     if (namaKobong) {
@@ -47,25 +44,31 @@ if (headerTitle) {
 }
 
 // -----------------------------------------------------------
-// 1. ADMIN KOBONG (Form Laporan, Detail Anggota & Riwayat Khusus)
+// 1. ADMIN KOBONG (Form Laporan, Detail Pengurus & Riwayat)
 // -----------------------------------------------------------
 const formAbsensi = document.getElementById('form-absensi');
+const detailPengurusElem = document.getElementById('detail-pengurus');
 const totalAnggotaElem = document.getElementById('total-anggota');
 const daftarAnggotaElem = document.getElementById('daftar-anggota-kobong');
 const tabelRiwayatKobong = document.getElementById('tabel-riwayat-kobong');
 
 if (formAbsensi) {
-    if (!namaKobong) {
-        if (totalAnggotaElem) totalAnggotaElem.innerText = 'URL tidak valid. Harap tambahkan ?kobong=NAMA_KOBONG di URL.';
-    } else {
-        // A. BACA DATA ANGGOTA KOBONG DARI FIRESTORE (MASTER_SANTRI)
+    if (namaKobong) {
+        // A. BACA DATA PENGURUS & ANGGOTA DARI FIRESTORE
         onSnapshot(doc(db, "master_santri", namaKobong), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 const anggotaList = data.anggota || [];
 
+                if (detailPengurusElem) {
+                    detailPengurusElem.innerHTML = `
+                        <strong>Ketua:</strong> ${data.ketua || '-'}<br>
+                        <strong>Wakil:</strong> ${data.wakil || '-'}
+                    `;
+                }
+
                 if (totalAnggotaElem) {
-                    totalAnggotaElem.innerText = `Total Santri Terdaftar: ${anggotaList.length} Orang`;
+                    totalAnggotaElem.innerText = `Daftar Anggota (${anggotaList.length} Santri):`;
                 }
 
                 if (daftarAnggotaElem) {
@@ -77,12 +80,12 @@ if (formAbsensi) {
                         htmlList += '</ol>';
                         daftarAnggotaElem.innerHTML = htmlList;
                     } else {
-                        daftarAnggotaElem.innerHTML = '<span style="color:#888;">Belum ada santri terdaftar di kobong ini.</span>';
+                        daftarAnggotaElem.innerHTML = '<span style="color:#888;">Belum ada anggota terdaftar.</span>';
                     }
                 }
             } else {
-                if (totalAnggotaElem) totalAnggotaElem.innerText = `Belum ada data santri untuk Kobong "${namaKobong}".`;
-                if (daftarAnggotaElem) daftarAnggotaElem.innerHTML = '<small style="color:#888;">Silakan masukkan data santri di Super Admin terlebih dahulu.</small>';
+                if (detailPengurusElem) detailPengurusElem.innerText = `Data Kobong "${namaKobong}" belum diinput di Super Admin.`;
+                if (daftarAnggotaElem) daftarAnggotaElem.innerHTML = '';
             }
         });
     }
@@ -96,17 +99,18 @@ if (formAbsensi) {
             return;
         }
 
+        const namaPelapor = document.getElementById('nama-pelapor').value.trim();
         const waktu = document.getElementById('waktu').value;
         const status = document.querySelector('input[name="status"]:checked').value;
-        const catatan = document.getElementById('catatan').value;
+        const catatan = document.getElementById('catatan').value.trim();
 
         try {
             await addDoc(collection(db, "laporan_absensi"), {
                 kobong: namaKobong,
+                nama: namaPelapor,
                 waktu: waktu,
                 status: status,
                 catatan: catatan || '-',
-                status_konfirmasi: 'Pending',
                 createdAt: new Date(),
                 tanggal: new Date().toLocaleDateString('id-ID'),
                 jam: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
@@ -132,25 +136,19 @@ if (formAbsensi) {
                 }
             });
 
-            // Sort manual dari yang terbaru
             listData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
             if (listData.length === 0) {
-                tabelRiwayatKobong.innerHTML = `<tr><td colspan="4" class="text-center">Belum ada riwayat laporan untuk kobong ini.</td></tr>`;
+                tabelRiwayatKobong.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada riwayat laporan untuk kobong ini.</td></tr>`;
             } else {
                 listData.forEach((item) => {
-                    const isApproved = item.status_konfirmasi === 'Approved';
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-                        <td>${item.status}</td>
+                        <td><strong>Kobong ${item.kobong}</strong></td>
+                        <td>${item.nama || '-'}</td>
                         <td>${item.catatan ? item.catatan.replace(/\n/g, '<br>') : '-'}</td>
-                        <td>
-                            ${isApproved 
-                                ? `<span class="status-approved">✓ Terkonfirmasi</span>` 
-                                : `<span style="color: #f57c00; font-weight: bold;">⏳ Pending</span>`
-                            }
-                        </td>
+                        <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
                     `;
                     tabelRiwayatKobong.appendChild(row);
                 });
@@ -223,20 +221,13 @@ function renderTabelDanGrafik() {
         tabelLaporan.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada laporan untuk kobong ini.</td></tr>`;
     } else {
         filteredData.forEach((item) => {
-            const isApproved = item.status_konfirmasi === 'Approved';
-
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
                 <td><strong>Kobong ${item.kobong}</strong></td>
-                <td>${item.status}</td>
+                <td>${item.nama || '-'}</td>
                 <td>${item.catatan ? item.catatan.replace(/\n/g, '<br>') : '-'}</td>
-                <td>
-                    ${isApproved 
-                        ? `<span class="status-approved">✓ Terkonfirmasi</span>` 
-                        : `<button class="btn-approve" onclick="konfirmasiLaporan('${item.id}')">Konfirmasi</button>`
-                    }
-                </td>
+                <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
             `;
             tabelLaporan.appendChild(row);
         });
@@ -296,18 +287,8 @@ function renderChart(rekapKobong) {
     });
 }
 
-window.konfirmasiLaporan = async function(docId) {
-    try {
-        await updateDoc(doc(db, "laporan_absensi", docId), {
-            status_konfirmasi: 'Approved'
-        });
-    } catch (err) {
-        alert('Gagal mengonfirmasi: ' + err.message);
-    }
-};
-
 // -----------------------------------------------------------
-// 3. PAGE DATA SANTRI (Tambah & Hapus Santri/Kobong)
+// 3. PAGE DATA SANTRI (Ketua, Wakil, Anggota)
 // -----------------------------------------------------------
 const formSantriKobong = document.getElementById('form-santri-kobong');
 const containerDaftarKobong = document.getElementById('container-daftar-kobong');
@@ -317,6 +298,8 @@ if (formSantriKobong) {
         e.preventDefault();
 
         const namaKobongInput = document.getElementById('nama-kobong-input').value.trim().toUpperCase();
+        const ketuaInput = document.getElementById('ketua-input').value.trim();
+        const wakilInput = document.getElementById('wakil-input').value.trim();
         const daftarSantriRaw = document.getElementById('daftar-santri-input').value.trim();
         const listSantriBaru = daftarSantriRaw.split('\n').map(nama => nama.trim()).filter(nama => nama !== '');
 
@@ -327,18 +310,22 @@ if (formSantriKobong) {
 
             if (docSnap.exists()) {
                 await updateDoc(docRef, {
+                    ketua: ketuaInput,
+                    wakil: wakilInput,
                     anggota: arrayUnion(...listSantriBaru),
                     updatedAt: new Date()
                 });
             } else {
                 await setDoc(docRef, {
                     nama_kobong: namaKobongInput,
+                    ketua: ketuaInput,
+                    wakil: wakilInput,
                     anggota: listSantriBaru,
                     updatedAt: new Date()
                 });
             }
 
-            alert(`Berhasil memperbarui data santri Kobong ${namaKobongInput}!`);
+            alert(`Berhasil menyimpan data Kobong ${namaKobongInput}!`);
             formSantriKobong.reset();
         } catch (err) {
             alert('Gagal menyimpan: ' + err.message);
@@ -349,7 +336,7 @@ if (formSantriKobong) {
         containerDaftarKobong.innerHTML = '';
 
         if (snapshot.empty) {
-            containerDaftarKobong.innerHTML = '<p class="text-center">Belum ada data santri yang dimasukkan.</p>';
+            containerDaftarKobong.innerHTML = '<p class="text-center">Belum ada data kobong yang dimasukkan.</p>';
             return;
         }
 
@@ -365,9 +352,13 @@ if (formSantriKobong) {
             let listHTML = `
                 <div style="margin-bottom: 12px; overflow: hidden;">
                     <button class="btn-delete-kobong" onclick="hapusKobong('${idKobong}')">Hapus Kobong</button>
-                    <h3 style="color: #2e7d32; margin: 0;">Kobong ${dataKobong.nama_kobong} (${anggotaList.length} Santri)</h3>
+                    <h3 style="color: #2e7d32; margin: 0;">Kobong ${dataKobong.nama_kobong}</h3>
+                    <p style="margin: 4px 0; font-size: 0.85rem; color: #1b5e20;">
+                        <strong>Ketua:</strong> ${dataKobong.ketua || '-'} | <strong>Wakil:</strong> ${dataKobong.wakil || '-'}
+                    </p>
                 </div>
                 <div style="font-size: 0.9rem;">
+                    <strong>Anggota (${anggotaList.length} Santri):</strong>
             `;
 
             if (anggotaList.length === 0) {
