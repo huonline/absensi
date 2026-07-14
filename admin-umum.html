@@ -11,13 +11,64 @@
 
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CSS KHUSUS CETAK/PRINT -->
+    <style>
+        @media print {
+            .btn-nav, .filter-box, .btn-action-group, header p {
+                display: none !important;
+            }
+            .container {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+            .admin-section {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+        }
+        .btn-action-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-print {
+            flex: 1;
+            background: #1565c0;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-copy {
+            flex: 1;
+            background: #2e7d32;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-print:hover { background: #0d47a1; }
+        .btn-copy:hover { background: #1b5e20; }
+    </style>
 </head>
 <body>
 
     <div class="container container-large">
         <header class="header">
             <h1>Dashboard Super Admin</h1>
-            <p>Pusat Monitoring & Grafik Persentase Absensi Santri</p>
+            <p>Pusat Monitoring & Grafik Persentase Absensi Santri (35 Kobong)</p>
             
             <div style="margin-top: 12px;">
                 <a href="data-santri.html" class="btn-nav" style="display: inline-block; width: 100%; text-align: center; box-sizing: border-box; padding: 10px;">
@@ -28,7 +79,7 @@
 
         <!-- SEKSI 1: GRAFIK PERSENTASE -->
         <section class="admin-section">
-            <h2>Persentase</h2>
+            <h2>Persentase </h2>
             <div class="chart-box">
                 <canvas id="grafikKehadiran"></canvas>
             </div>
@@ -40,13 +91,19 @@
         <section class="admin-section">
             <h2>Laporan</h2>
 
+            <!-- TOMBOL CETAK & SALIN REKAP -->
+            <div class="btn-action-group">
+                <button onclick="window.print()" class="btn-print">🖨️ Cetak / Simpan PDF</button>
+                <button onclick="salinRekapTeks()" class="btn-copy">📋 Salin Ringkasan WA</button>
+            </div>
+
             <div class="filter-box" style="margin-top: 10px; margin-bottom: 15px;">
                 <select id="filter-kobong" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32; cursor: pointer;">
                     <option value="ALL">-- Lihat Semua Kobong --</option>
                 </select>
             </div>
 
-            <!-- TABEL DENGAN KOLOM: Waktu | Kobong | Nama | Ket | Status -->
+            <!-- TABEL LAPORAN -->
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
