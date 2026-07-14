@@ -47,6 +47,17 @@ const tabelRiwayatKobong = document.getElementById('tabel-riwayat-kobong');
 if (formAbsensi) {
     const kobongKey = namaKobong.toUpperCase();
 
+ // -----------------------------------------------------------
+// 1. ADMIN KOBONG (Form Laporan, Detail Anggota & Riwayat Khusus)
+// -----------------------------------------------------------
+const formAbsensi = document.getElementById('form-absensi');
+const totalAnggotaElem = document.getElementById('total-anggota');
+const daftarAnggotaElem = document.getElementById('daftar-anggota-kobong');
+const tabelRiwayatKobong = document.getElementById('tabel-riwayat-kobong');
+
+if (formAbsensi) {
+    const kobongKey = namaKobong.toUpperCase().trim();
+
     // A. BACA DATA ANGGOTA KOBONG DARI FIRESTORE (MASTER_SANTRI)
     onSnapshot(doc(db, "master_santri", kobongKey), (docSnap) => {
         if (docSnap.exists()) {
@@ -70,8 +81,8 @@ if (formAbsensi) {
                 }
             }
         } else {
-            if (totalAnggotaElem) totalAnggotaElem.innerText = 'Data kobong belum dimasukkan oleh Super Admin.';
-            if (daftarAnggotaElem) daftarAnggotaElem.innerHTML = '';
+            if (totalAnggotaElem) totalAnggotaElem.innerText = `Belum ada data untuk Kobong "${kobongKey}".`;
+            if (daftarAnggotaElem) daftarAnggotaElem.innerHTML = '<small style="color:#888;">Silakan masukkan data santri di Super Admin terlebih dahulu.</small>';
         }
     });
 
@@ -103,34 +114,37 @@ if (formAbsensi) {
 
     // C. BACA RIWAYAT LAPORAN KHUSUS KOBONG INI
     if (tabelRiwayatKobong) {
-        const qKobong = query(
-            collection(db, "laporan_absensi"), 
-            orderBy("createdAt", "desc")
-        );
-
-        onSnapshot(qKobong, (snapshot) => {
+        onSnapshot(collection(db, "laporan_absensi"), (snapshot) => {
             tabelRiwayatKobong.innerHTML = '';
             let count = 0;
+            const listData = [];
 
             snapshot.forEach((docSnap) => {
                 const item = docSnap.data();
                 if (item.kobong === kobongKey) {
-                    count++;
-                    const isApproved = item.status_konfirmasi === 'Approved';
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-                        <td>${item.status}</td>
-                        <td>${item.catatan ? item.catatan.replace(/\n/g, '<br>') : '-'}</td>
-                        <td>
-                            ${isApproved 
-                                ? `<span class="status-approved">✓ Terkonfirmasi</span>` 
-                                : `<span style="color: #f57c00; font-weight: bold;">⏳ Pending</span>`
-                            }
-                        </td>
-                    `;
-                    tabelRiwayatKobong.appendChild(row);
+                    listData.push(item);
                 }
+            });
+
+            // Sort manual dari yang terbaru
+            listData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+            listData.forEach((item) => {
+                count++;
+                const isApproved = item.status_konfirmasi === 'Approved';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
+                    <td>${item.status}</td>
+                    <td>${item.catatan ? item.catatan.replace(/\n/g, '<br>') : '-'}</td>
+                    <td>
+                        ${isApproved 
+                            ? `<span class="status-approved">✓ Terkonfirmasi</span>` 
+                            : `<span style="color: #f57c00; font-weight: bold;">⏳ Pending</span>`
+                        }
+                    </td>
+                `;
+                tabelRiwayatKobong.appendChild(row);
             });
 
             if (count === 0) {
