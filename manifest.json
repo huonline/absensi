@@ -13,8 +13,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "./admin-kobong.html",
+  "start_url": "./",
   "background_color": "#ffffff",
-  "display": "standalone",
+  "display": "browser",
   "theme_color": "#2e7d32"
 }
