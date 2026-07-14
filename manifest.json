@@ -13,9 +13,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "admin-kobong.html",
+  "start_url": "admin-kobong.html?mode=pwa",
   "scope": "./",
-  "display": "minimal-ui",
+  "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2e7d32"
 }
