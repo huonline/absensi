@@ -16,6 +16,35 @@
     <div class="container">
       <!-- Header Kobong -->
 <header class="header">
+  <!-- BANNER STATUS JAM ABSENSI -->
+<div id="status-jam-box" style="padding: 10px 14px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-weight: 600; font-size: 0.88rem;">
+    Memeriksa jadwal absensi...
+</div>
+
+<script>
+    function cekJamAbsensi() {
+        const skr = new Date();
+        const totalMenit = (skr.getHours() * 60) + skr.getMinutes();
+        const jamBuka = (22 * 60) + 30;  // 22:30
+        const jamTutup = (23 * 60) + 30; // 23:30
+        const box = document.getElementById('status-jam-box');
+
+        if (totalMenit >= jamBuka && totalMenit <= jamTutup) {
+            box.style.background = '#e8f5e9';
+            box.style.color = '#2e7d32';
+            box.style.border = '1px solid #a5d6a7';
+            box.innerHTML = '🟢 **ABSENSI DIBUKA** (22:30 - 23:30 WIB)';
+        } else {
+            box.style.background = '#ffebee';
+            box.style.color = '#c62828';
+            box.style.border = '1px solid #ef9a9a';
+            box.innerHTML = '🔴 **ABSENSI DITUTUP**<br><small style="font-weight:normal;">Pengisian hanya dibuka pukul 22:30 - 23:30 WIB</small>';
+        }
+    }
+    setInterval(cekJamAbsensi, 10000); // Cek tiap 10 detik
+    cekJamAbsensi();
+</script>
+    
     <h1 id="nama-kobong">Laporan Absensi Kobong</h1>
 </header>
 
