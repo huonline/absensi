@@ -34,44 +34,41 @@
         </section>
 
         <!-- FORMULIR INPUT LAPORAN -->
-        <form id="form-absensi" class="form-absensi">
-            <div class="form-group">
-                <label for="nama-pelapor">Nama Pelapor (Ketua / Wakil):</label>
-                <input type="text" id="nama-pelapor" placeholder="Masukkan nama pelapor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-            </div>
+      <!-- FORMULIR INPUT LAPORAN (SISTEM CEKLIS) -->
+<form id="form-absensi" class="form-absensi">
+    <div class="form-group">
+        <label for="nama-pelapor">Nama Pelapor (Ketua / Wakil):</label>
+        <input type="text" id="nama-pelapor" placeholder="Masukkan nama pelapor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+    </div>
 
-            <div class="form-group">
-                <label for="waktu">Waktu Absensi:</label>
-                <select id="waktu" name="waktu" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-                    <option value="">-- Pilih Waktu --</option>
-                    <option value="Subuh">Subuh</option>
-                    <option value="Maghrib">Maghrib</option>
-                    <option value="Isya">Isya</option>
-                    <option value="Malam (Tidur)">Malam (Tidur)</option>
-                </select>
-            </div>
+    <div class="form-group">
+        <label for="waktu">Waktu Absensi:</label>
+        <select id="waktu" name="waktu" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            <option value="">-- Pilih Waktu --</option>
+            <option value="Subuh">Subuh</option>
+            <option value="Maghrib">Maghrib</option>
+            <option value="Isya">Isya</option>
+            <option value="Malam (Tidur)">Malam (Tidur)</option>
+        </select>
+    </div>
 
-            <div class="form-group">
-                <label>Status Kehadiran:</label>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="status" value="Lengkap" checked>
-                        <span>Lengkap (Hadir Semua)</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="status" value="Tidak Lengkap">
-                        <span>Tidak Lengkap</span>
-                    </label>
-                </div>
-            </div>
+    <!-- DAFTAR CEKLIS SANTRI -->
+    <div class="form-group">
+        <label style="margin-bottom: 4px; display: block;">Daftar Presensi Santri:</label>
+        <small style="color: #666; display: block; margin-bottom: 12px;">Pilih status kehadiran untuk masing-masing santri:</small>
+        
+        <div id="container-ceklis-santri" style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="color: #888; font-size: 0.9rem;">Memuat daftar santri...</p>
+        </div>
+    </div>
 
-            <div class="form-group">
-                <label for="catatan">Keterangan (Nama Santri Keterangan Tidak Hadir):</label>
-                <textarea id="catatan" name="catatan" rows="3" placeholder="Contoh: Ahmad (Sakit), Budi (Izin Pulang)"></textarea>
-            </div>
+    <div class="form-group" style="margin-top: 15px;">
+        <label for="catatan">Catatan Tambahan (Opsional):</label>
+        <textarea id="catatan" name="catatan" rows="2" placeholder="Contoh: Lampiran surat izin / keterangan tambahan"></textarea>
+    </div>
 
-            <button type="submit" class="btn-submit">Kirim Laporan</button>
-        </form>
+    <button type="submit" class="btn-submit">Kirim Laporan Absensi</button>
+</form>
 
         <hr class="divider">
 
