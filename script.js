@@ -44,21 +44,24 @@ if (headerTitle) {
 }
 
 // -----------------------------------------------------------
-// 1. ADMIN KOBONG (Form Laporan, Detail Pengurus & Riwayat)
+// 1. ADMIN KOBONG (Form Laporan Ceklis, Detail Pengurus & Riwayat)
 // -----------------------------------------------------------
 const formAbsensi = document.getElementById('form-absensi');
 const detailPengurusElem = document.getElementById('detail-pengurus');
 const totalAnggotaElem = document.getElementById('total-anggota');
 const daftarAnggotaElem = document.getElementById('daftar-anggota-kobong');
+const containerCeklisSantri = document.getElementById('container-ceklis-santri');
 const tabelRiwayatKobong = document.getElementById('tabel-riwayat-kobong');
+
+let listAnggotaKobong = [];
 
 if (formAbsensi) {
     if (namaKobong) {
-        // A. BACA DATA PENGURUS & ANGGOTA DARI FIRESTORE
+        // A. BACA DATA PENGURUS & GENERATE FORM CEKLIS SANTRI DARI FIRESTORE
         onSnapshot(doc(db, "master_santri", namaKobong), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                const anggotaList = data.anggota || [];
+                listAnggotaKobong = data.anggota || [];
 
                 if (detailPengurusElem) {
                     detailPengurusElem.innerHTML = `
@@ -68,13 +71,14 @@ if (formAbsensi) {
                 }
 
                 if (totalAnggotaElem) {
-                    totalAnggotaElem.innerText = `Daftar Anggota (${anggotaList.length} Santri):`;
+                    totalAnggotaElem.innerText = `Daftar Anggota (${listAnggotaKobong.length} Santri):`;
                 }
 
+                // Render daftar ringkas di info box
                 if (daftarAnggotaElem) {
-                    if (anggotaList.length > 0) {
+                    if (listAnggotaKobong.length > 0) {
                         let htmlList = '<ol style="margin: 0; padding-left: 18px;">';
-                        anggotaList.forEach(nama => {
+                        listAnggotaKobong.forEach(nama => {
                             htmlList += `<li>${nama}</li>`;
                         });
                         htmlList += '</ol>';
@@ -83,14 +87,41 @@ if (formAbsensi) {
                         daftarAnggotaElem.innerHTML = '<span style="color:#888;">Belum ada anggota terdaftar.</span>';
                     }
                 }
+
+                // GENERATE ITEM CEKLIS DI FORMULIR
+                if (containerCeklisSantri) {
+                    containerCeklisSantri.innerHTML = '';
+
+                    if (listAnggotaKobong.length === 0) {
+                        containerCeklisSantri.innerHTML = '<p style="color: #c62828;">Belum ada santri terdaftar di kobong ini. Tambahkan data santri terlebih dahulu di Super Admin.</p>';
+                    } else {
+                        listAnggotaKobong.forEach((namaSantri, idx) => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'item-ceklis-santri';
+                            
+                            // Bebas pilih Hadir (default), Sakit, Izin, atau Alfa
+                            itemDiv.innerHTML = `
+                                <span class="nama-santri-label">${idx + 1}. ${namaSantri}</span>
+                                <div class="opsi-kehadiran-group">
+                                    <label><input type="radio" name="status_santri_${idx}" value="Hadir" checked> Hadir</label>
+                                    <label><input type="radio" name="status_santri_${idx}" value="Sakit"> Sakit</label>
+                                    <label><input type="radio" name="status_santri_${idx}" value="Izin"> Izin</label>
+                                    <label><input type="radio" name="status_santri_${idx}" value="Alfa"> Alfa</label>
+                                </div>
+                            `;
+                            containerCeklisSantri.appendChild(itemDiv);
+                        });
+                    }
+                }
             } else {
                 if (detailPengurusElem) detailPengurusElem.innerText = `Data Kobong "${namaKobong}" belum diinput di Super Admin.`;
                 if (daftarAnggotaElem) daftarAnggotaElem.innerHTML = '';
+                if (containerCeklisSantri) containerCeklisSantri.innerHTML = '<p style="color: #888;">Data kobong tidak ditemukan.</p>';
             }
         });
     }
 
-    // B. KIRIM LAPORAN ABSENSI
+    // B. KIRIM LAPORAN ABSENSI CEKLIS
     formAbsensi.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -99,27 +130,76 @@ if (formAbsensi) {
             return;
         }
 
+        if (listAnggotaKobong.length === 0) {
+            alert('Gagal mengirim: Tidak ada santri yang dapat di-absen.');
+            return;
+        }
+
         const namaPelapor = document.getElementById('nama-pelapor').value.trim();
         const waktu = document.getElementById('waktu').value;
-        const status = document.querySelector('input[name="status"]:checked').value;
         const catatan = document.getElementById('catatan').value.trim();
+
+        // Kumpulkan status kehadiran setiap santri
+        const detailPresensi = [];
+        let jumlahHadir = 0;
+        let jumlahSakit = 0;
+        let jumlahIzin = 0;
+        let jumlahAlfa = 0;
+        const santriTidakHadir = [];
+
+        listAnggotaKobong.forEach((namaSantri, idx) => {
+            const statusSelected = document.querySelector(`input[name="status_santri_${idx}"]:checked`).value;
+            
+            detailPresensi.push({
+                nama: namaSantri,
+                status: statusSelected
+            });
+
+            if (statusSelected === 'Hadir') {
+                jumlahHadir++;
+            } else {
+                if (statusSelected === 'Sakit') jumlahSakit++;
+                if (statusSelected === 'Izin') jumlahIzin++;
+                if (statusSelected === 'Alfa') jumlahAlfa++;
+                
+                santriTidakHadir.push(`${namaSantri} (${statusSelected})`);
+            }
+        });
+
+        // Tentukan status global laporan
+        const statusGlobal = (jumlahHadir === listAnggotaKobong.length) ? 'Lengkap' : 'Tidak Lengkap';
+        
+        // Buat ringkasan catatan otomatis jika ada santri tidak hadir
+        let catatanFinal = catatan;
+        if (santriTidakHadir.length > 0) {
+            const rincianKeterangan = `Tidak Hadir: ${santriTidakHadir.join(', ')}`;
+            catatanFinal = catatan ? `${catatan}\n${rincianKeterangan}` : rincianKeterangan;
+        }
 
         try {
             await addDoc(collection(db, "laporan_absensi"), {
                 kobong: namaKobong,
                 nama: namaPelapor,
                 waktu: waktu,
-                status: status,
-                catatan: catatan || '-',
+                status: statusGlobal,
+                catatan: catatanFinal || '-',
+                detail_presensi: detailPresensi, // Menyimpan array rincian presensi santri
+                ringkasan: {
+                    total: listAnggotaKobong.length,
+                    hadir: jumlahHadir,
+                    sakit: jumlahSakit,
+                    izin: jumlahIzin,
+                    alfa: jumlahAlfa
+                },
                 createdAt: new Date(),
                 tanggal: new Date().toLocaleDateString('id-ID'),
                 jam: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
             });
 
-            alert('Laporan berhasil dikirim!');
+            alert('Laporan absensi berhasil dikirim!');
             formAbsensi.reset();
         } catch (err) {
-            alert('Gagal mengirim: ' + err.message);
+            alert('Gagal mengirim laporan: ' + err.message);
         }
     });
 
@@ -143,13 +223,15 @@ if (formAbsensi) {
             } else {
                 listData.forEach((item) => {
                     const row = document.createElement('tr');
-                   row.innerHTML = `
-    <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-    <td><strong>Kobong ${item.kobong}</strong></td>
-    <td>${item.nama || '-'}</td>
-    <td style="white-space: pre-line;">${item.catatan || '-'}</td>
-    <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
-`;
+                    const statusColor = item.status === 'Lengkap' ? '#2e7d32' : '#c62828';
+                    
+                    row.innerHTML = `
+                        <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
+                        <td><strong>Kobong ${item.kobong}</strong></td>
+                        <td>${item.nama || '-'}</td>
+                        <td style="white-space: pre-line;">${item.catatan || '-'}</td>
+                        <td><span style="color: ${statusColor}; font-weight: bold;">${item.status}</span></td>
+                    `;
                     tabelRiwayatKobong.appendChild(row);
                 });
             }
