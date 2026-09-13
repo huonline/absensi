@@ -307,3 +307,73 @@ textarea {
     padding: 4px 0;
     border-bottom: 1px dashed #eee;
 }
+
+/* --- CEKLIS ABSENSI SANTRI --- */
+.item-ceklis-santri {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    gap: 10px;
+}
+
+.item-ceklis-santri .nama-santri-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+}
+
+.opsi-kehadiran-group {
+    display: flex;
+    gap: 8px;
+}
+
+.opsi-kehadiran-group label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background: #f9f9f9;
+    user-select: none;
+    margin: 0;
+}
+
+.opsi-kehadiran-group input[type="radio"] {
+    display: none;
+}
+
+/* Style tombol pilihan saat dipilih */
+.opsi-kehadiran-group input[value="Hadir"]:checked + span {
+    color: #2e7d32;
+    font-weight: bold;
+}
+.opsi-kehadiran-group input[value="Hadir"]:checked ~ label, 
+.opsi-kehadiran-group label:has(input[value="Hadir"]:checked) {
+    background: #e8f5e9;
+    border-color: #81c784;
+    color: #2e7d32;
+}
+
+.opsi-kehadiran-group label:has(input[value="Sakit"]:checked) {
+    background: #e3f2fd;
+    border-color: #90caf9;
+    color: #1565c0;
+}
+
+.opsi-kehadiran-group label:has(input[value="Izin"]:checked) {
+    background: #fff8e1;
+    border-color: #ffe082;
+    color: #f57f17;
+}
+
+.opsi-kehadiran-group label:has(input[value="Alfa"]:checked) {
+    background: #ffebee;
+    border-color: #ef9a9a;
+    color: #c62828;
+}
