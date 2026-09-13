@@ -370,7 +370,7 @@ function renderChart(rekapKobong) {
 }
 
 // -----------------------------------------------------------
-// 3. PAGE DATA SANTRI (Ketua, Wakil, Anggota)
+// 3. PAGE DATA SANTRI (Ketua, Wakil, Anggota & Edit Pengurus)
 // -----------------------------------------------------------
 const formSantriKobong = document.getElementById('form-santri-kobong');
 const containerDaftarKobong = document.getElementById('container-daftar-kobong');
@@ -434,8 +434,9 @@ if (formSantriKobong) {
             let listHTML = `
                 <div style="margin-bottom: 12px; overflow: hidden;">
                     <button class="btn-delete-kobong" onclick="hapusKobong('${idKobong}')">Hapus Kobong</button>
+                    <button class="btn-edit-pengurus" onclick="editPengurusKobong('${idKobong}', '${dataKobong.ketua || ''}', '${dataKobong.wakil || ''}')">✏️ Edit Pengurus</button>
                     <h3 style="color: #2e7d32; margin: 0;">Kobong ${dataKobong.nama_kobong}</h3>
-                    <p style="margin: 4px 0; font-size: 0.85rem; color: #1b5e20;">
+                    <p style="margin: 6px 0 4px 0; font-size: 0.85rem; color: #1b5e20;">
                         <strong>Ketua:</strong> ${dataKobong.ketua || '-'} | <strong>Wakil:</strong> ${dataKobong.wakil || '-'}
                     </p>
                 </div>
@@ -462,6 +463,26 @@ if (formSantriKobong) {
         });
     });
 }
+
+// FUNGSI UNTUK EDIT / GANTI KETUA DAN WAKIL KOBONG
+window.editPengurusKobong = async function(idKobong, ketuaLama, wakilLama) {
+    const ketuaBaru = prompt(`Masukkan nama Ketua baru untuk Kobong ${idKobong}:`, ketuaLama);
+    if (ketuaBaru === null) return; // Batal jika tekan cancel
+
+    const wakilBaru = prompt(`Masukkan nama Wakil baru untuk Kobong ${idKobong}:`, wakilLama);
+    if (wakilBaru === null) return; // Batal jika tekan cancel
+
+    try {
+        await updateDoc(doc(db, "master_santri", idKobong), {
+            ketua: ketuaBaru.trim(),
+            wakil: wakilBaru.trim(),
+            updatedAt: new Date()
+        });
+        alert(`Berhasil memperbarui Ketua & Wakil Kobong ${idKobong}!`);
+    } catch (err) {
+        alert('Gagal memperbarui pengurus: ' + err.message);
+    }
+};
 
 window.hapusSantri = async function(idKobong, namaSantri) {
     if (confirm(`Yakin ingin menghapus ${namaSantri} dari Kobong ${idKobong}?`)) {
