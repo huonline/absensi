@@ -121,7 +121,7 @@ if (formAbsensi) {
         });
     }
 
-    // B. KIRIM LAPORAN ABSENSI CEKLIS
+  // B. KIRIM LAPORAN ABSENSI CEKLIS (DENGAN BATAS WAKUL & ANTI SPAM)
     formAbsensi.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -130,13 +130,42 @@ if (formAbsensi) {
             return;
         }
 
+        // ========================================================
+        // 1. CEK BATASAN JAM (22.30 - 23.30 WIB)
+        // ========================================================
+        const sekarang = new Date();
+        const jam = sekarang.getHours();
+        const menit = sekarang.getMinutes();
+
+        // Hitung total menit dari jam 00:00 (22:30 = 1350 menit, 23:30 = 1410 menit)
+        const totalMenitSekarang = (jam * 60) + menit;
+        const jamBuka = (22 * 60) + 30;  // 22:30 WIB
+        const jamTutup = (23 * 60) + 30; // 23:30 WIB
+
+        if (totalMenitSekarang < jamBuka || totalMenitSekarang > jamTutup) {
+            alert('⚠️ Akses Ditutup!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 23:30 WIB.');
+            return;
+        }
+
+        // ========================================================
+        // 2. CEK ANTI-SPAM / MENCEGAH PENGIRIMAN BERULANG HARI INI
+        // ========================================================
+        const tanggalHariIni = sekarang.toLocaleDateString('id-ID');
+        const waktuTerpilih = document.getElementById('waktu').value;
+        const keyAbsen = `absen_${namaKobong}_${tanggalHariIni}_${waktuTerpilih}`;
+
+        if (localStorage.getItem(keyAbsen)) {
+            alert(`⚠️ Kamu sudah mengirimkan laporan absensi ${waktuTerpilih} untuk Kobong ${namaKobong} hari ini!`);
+            return;
+        }
+
         if (listAnggotaKobong.length === 0) {
             alert('Gagal mengirim: Tidak ada santri yang dapat di-absen.');
             return;
         }
 
+        const btnSubmit = formAbsensi.querySelector('button[type="submit"]');
         const namaPelapor = document.getElementById('nama-pelapor').value.trim();
-        const waktu = document.getElementById('waktu').value;
         const catatan = document.getElementById('catatan').value.trim();
 
         // Kumpulkan status kehadiran setiap santri
@@ -166,10 +195,8 @@ if (formAbsensi) {
             }
         });
 
-        // Tentukan status global laporan
         const statusGlobal = (jumlahHadir === listAnggotaKobong.length) ? 'Lengkap' : 'Tidak Lengkap';
         
-        // Buat ringkasan catatan otomatis jika ada santri tidak hadir
         let catatanFinal = catatan;
         if (santriTidakHadir.length > 0) {
             const rincianKeterangan = `Tidak Hadir: ${santriTidakHadir.join(', ')}`;
@@ -177,13 +204,17 @@ if (formAbsensi) {
         }
 
         try {
+            // Disable tombol submit biar ga diklik 2x berturut-turut
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = 'Mengirim...';
+
             await addDoc(collection(db, "laporan_absensi"), {
                 kobong: namaKobong,
                 nama: namaPelapor,
-                waktu: waktu,
+                waktu: waktuTerpilih,
                 status: statusGlobal,
                 catatan: catatanFinal || '-',
-                detail_presensi: detailPresensi, // Menyimpan array rincian presensi santri
+                detail_presensi: detailPresensi,
                 ringkasan: {
                     total: listAnggotaKobong.length,
                     hadir: jumlahHadir,
@@ -192,14 +223,20 @@ if (formAbsensi) {
                     alfa: jumlahAlfa
                 },
                 createdAt: new Date(),
-                tanggal: new Date().toLocaleDateString('id-ID'),
-                jam: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                tanggal: tanggalHariIni,
+                jam: sekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
             });
+
+            // Simpan tanda bahwa kobong ini sudah absen di jam ini hari ini
+            localStorage.setItem(keyAbsen, 'true');
 
             alert('Laporan absensi berhasil dikirim!');
             formAbsensi.reset();
         } catch (err) {
             alert('Gagal mengirim laporan: ' + err.message);
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = 'Kirim Laporan Absensi';
         }
     });
 
