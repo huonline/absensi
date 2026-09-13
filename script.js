@@ -44,6 +44,21 @@ if (headerTitle) {
 }
 
 // -----------------------------------------------------------
+// FUNGSI CEK & KUNCI JAM (22:30 - 23:30 WIB)
+// -----------------------------------------------------------
+function cekBatasWaktuAbsensi() {
+    const sekarang = new Date();
+    const jam = sekarang.getHours();
+    const menit = sekarang.getMinutes();
+    const totalMenitSekarang = (jam * 60) + menit;
+
+    const jamBuka = (22 * 60) + 30;  // 22:30 WIB (1350 menit)
+    const jamTutup = (23 * 60) + 30; // 23:30 WIB (1410 menit)
+
+    return (totalMenitSekarang >= jamBuka && totalMenitSekarang <= jamTutup);
+}
+
+// -----------------------------------------------------------
 // 1. ADMIN KOBONG (Form Laporan Ceklis, Detail Pengurus & Riwayat)
 // -----------------------------------------------------------
 const formAbsensi = document.getElementById('form-absensi');
@@ -74,7 +89,6 @@ if (formAbsensi) {
                     totalAnggotaElem.innerText = `Daftar Anggota (${listAnggotaKobong.length} Santri):`;
                 }
 
-                // Render daftar ringkas di info box
                 if (daftarAnggotaElem) {
                     if (listAnggotaKobong.length > 0) {
                         let htmlList = '<ol style="margin: 0; padding-left: 18px;">';
@@ -99,7 +113,6 @@ if (formAbsensi) {
                             const itemDiv = document.createElement('div');
                             itemDiv.className = 'item-ceklis-santri';
                             
-                            // Bebas pilih Hadir (default), Sakit, Izin, atau Alfa
                             itemDiv.innerHTML = `
                                 <span class="nama-santri-label">${idx + 1}. ${namaSantri}</span>
                                 <div class="opsi-kehadiran-group">
@@ -121,7 +134,7 @@ if (formAbsensi) {
         });
     }
 
-  // B. KIRIM LAPORAN ABSENSI CEKLIS (DENGAN BATAS WAKUL & ANTI SPAM)
+    // B. KIRIM LAPORAN ABSENSI CEKLIS (PROTEKSI KETAT)
     formAbsensi.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -130,32 +143,20 @@ if (formAbsensi) {
             return;
         }
 
-        // ========================================================
-        // 1. CEK BATASAN JAM (22.30 - 23.30 WIB)
-        // ========================================================
-        const sekarang = new Date();
-        const jam = sekarang.getHours();
-        const menit = sekarang.getMinutes();
-
-        // Hitung total menit dari jam 00:00 (22:30 = 1350 menit, 23:30 = 1410 menit)
-        const totalMenitSekarang = (jam * 60) + menit;
-        const jamBuka = (22 * 60) + 30;  // 22:30 WIB
-        const jamTutup = (23 * 60) + 30; // 23:30 WIB
-
-        if (totalMenitSekarang < jamBuka || totalMenitSekarang > jamTutup) {
-            alert('⚠️ Akses Ditutup!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 23:30 WIB.');
+        // 1. CEK WAKTU AKSES (22:30 - 23:30)
+        if (!cekBatasWaktuAbsensi()) {
+            alert('⚠️ AKSES DITUTUP!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 23:30 WIB.');
             return;
         }
 
-        // ========================================================
-        // 2. CEK ANTI-SPAM / MENCEGAH PENGIRIMAN BERULANG HARI INI
-        // ========================================================
+        const sekarang = new Date();
         const tanggalHariIni = sekarang.toLocaleDateString('id-ID');
         const waktuTerpilih = document.getElementById('waktu').value;
         const keyAbsen = `absen_${namaKobong}_${tanggalHariIni}_${waktuTerpilih}`;
 
+        // 2. CEK ANTI-SPAM (SUDAH ABSEN HARI INI)
         if (localStorage.getItem(keyAbsen)) {
-            alert(`⚠️ Kamu sudah mengirimkan laporan absensi ${waktuTerpilih} untuk Kobong ${namaKobong} hari ini!`);
+            alert(`⚠️ Kobong ${namaKobong} sudah mengirimkan laporan absensi (${waktuTerpilih}) hari ini!`);
             return;
         }
 
@@ -168,21 +169,16 @@ if (formAbsensi) {
         const namaPelapor = document.getElementById('nama-pelapor').value.trim();
         const catatan = document.getElementById('catatan').value.trim();
 
-        // Kumpulkan status kehadiran setiap santri
+        // Kumpulkan data presensi
         const detailPresensi = [];
-        let jumlahHadir = 0;
-        let jumlahSakit = 0;
-        let jumlahIzin = 0;
-        let jumlahAlfa = 0;
+        let jumlahHadir = 0, jumlahSakit = 0, jumlahIzin = 0, jumlahAlfa = 0;
         const santriTidakHadir = [];
 
         listAnggotaKobong.forEach((namaSantri, idx) => {
-            const statusSelected = document.querySelector(`input[name="status_santri_${idx}"]:checked`).value;
+            const radio = document.querySelector(`input[name="status_santri_${idx}"]:checked`);
+            const statusSelected = radio ? radio.value : 'Hadir';
             
-            detailPresensi.push({
-                nama: namaSantri,
-                status: statusSelected
-            });
+            detailPresensi.push({ nama: namaSantri, status: statusSelected });
 
             if (statusSelected === 'Hadir') {
                 jumlahHadir++;
@@ -190,7 +186,6 @@ if (formAbsensi) {
                 if (statusSelected === 'Sakit') jumlahSakit++;
                 if (statusSelected === 'Izin') jumlahIzin++;
                 if (statusSelected === 'Alfa') jumlahAlfa++;
-                
                 santriTidakHadir.push(`${namaSantri} (${statusSelected})`);
             }
         });
@@ -199,12 +194,11 @@ if (formAbsensi) {
         
         let catatanFinal = catatan;
         if (santriTidakHadir.length > 0) {
-            const rincianKeterangan = `Tidak Hadir: ${santriTidakHadir.join(', ')}`;
-            catatanFinal = catatan ? `${catatan}\n${rincianKeterangan}` : rincianKeterangan;
+            const rincian = `Tidak Hadir: ${santriTidakHadir.join(', ')}`;
+            catatanFinal = catatan ? `${catatan}\n${rincian}` : rincian;
         }
 
         try {
-            // Disable tombol submit biar ga diklik 2x berturut-turut
             btnSubmit.disabled = true;
             btnSubmit.innerText = 'Mengirim...';
 
@@ -227,7 +221,6 @@ if (formAbsensi) {
                 jam: sekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
             });
 
-            // Simpan tanda bahwa kobong ini sudah absen di jam ini hari ini
             localStorage.setItem(keyAbsen, 'true');
 
             alert('Laporan absensi berhasil dikirim!');
@@ -240,7 +233,7 @@ if (formAbsensi) {
         }
     });
 
-    // C. BACA RIWAYAT LAPORAN KHUSUS KOBONG INI
+    // C. BACA RIWAYAT LAPORAN
     if (tabelRiwayatKobong && namaKobong) {
         onSnapshot(collection(db, "laporan_absensi"), (snapshot) => {
             tabelRiwayatKobong.innerHTML = '';
@@ -341,13 +334,13 @@ function renderTabelDanGrafik() {
     } else {
         filteredData.forEach((item) => {
             const row = document.createElement('tr');
-           row.innerHTML = `
-    <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-    <td><strong>Kobong ${item.kobong}</strong></td>
-    <td>${item.nama || '-'}</td>
-    <td style="white-space: pre-line;">${item.catatan || '-'}</td>
-    <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
-`;
+            row.innerHTML = `
+                <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
+                <td><strong>Kobong ${item.kobong}</strong></td>
+                <td>${item.nama || '-'}</td>
+                <td style="white-space: pre-line;">${item.catatan || '-'}</td>
+                <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
+            `;
             tabelLaporan.appendChild(row);
         });
     }
@@ -504,10 +497,10 @@ if (formSantriKobong) {
 // FUNGSI UNTUK EDIT / GANTI KETUA DAN WAKIL KOBONG
 window.editPengurusKobong = async function(idKobong, ketuaLama, wakilLama) {
     const ketuaBaru = prompt(`Masukkan nama Ketua baru untuk Kobong ${idKobong}:`, ketuaLama);
-    if (ketuaBaru === null) return; // Batal jika tekan cancel
+    if (ketuaBaru === null) return;
 
     const wakilBaru = prompt(`Masukkan nama Wakil baru untuk Kobong ${idKobong}:`, wakilLama);
-    if (wakilBaru === null) return; // Batal jika tekan cancel
+    if (wakilBaru === null) return;
 
     try {
         await updateDoc(doc(db, "master_santri", idKobong), {
