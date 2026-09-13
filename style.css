@@ -458,3 +458,22 @@ textarea {
     margin-bottom: 4px;
     color: #555;
 }
+
+/* --- TOMBOL EDIT PENGURUS --- */
+.btn-edit-pengurus {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    float: right;
+    margin-right: 8px;
+    transition: background 0.2s;
+}
+
+.btn-edit-pengurus:hover {
+    background: #c8e6c9;
+}
