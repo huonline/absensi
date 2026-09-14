@@ -6,7 +6,7 @@
  * - Data Firestore lama tidak diubah, dipindah, atau dihapus.
  * - Laporan lama tetap memakai field `kobong` seperti sebelumnya.
  * - Kode unik hanya menjadi identitas/link alternatif untuk membuka kobong.
- * - Link lama ?kobong=... tetap 100% kompatibel.
+ * - Link lama ?kobong=... tetap kompatibel.
  * - Tidak membuat Firebase app kedua.
  */
 
@@ -67,14 +67,17 @@ function buatLinkAbsensiUnik(idKobong) {
 }
 
 function ambilIdDariKode(kode) {
-    const value = String(kode || '').trim().toUpperCase();
-    const match = /^KBG-([A-Z0-9_-]+)-([A-Z0-9]+)$/.exec(value);
+    // Jangan mengubah huruf besar/kecil pada bagian Base64.
+    // Base64 bersifat case-sensitive.
+    const value = String(kode || '').trim();
+    const match = /^KBG-(.+)-([A-Z0-9]+)$/i.exec(value);
     if (!match) return null;
 
-    const id = decodeKobongId(match[1]);
+    const encodedId = match[1];
+    const id = decodeKobongId(encodedId);
     if (!id) return null;
 
-    // Validasi supaya kode tidak bisa menunjuk ke ID lain secara tidak sengaja.
+    // Validasi membuat kode tetap unik dan tidak mudah salah rujuk.
     if (buatKodeUnikKobong(id) !== value) return null;
     return id;
 }
@@ -163,7 +166,7 @@ function escapeHtmlUnik(value) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
+        .replace(/\"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
 
