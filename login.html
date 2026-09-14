@@ -124,8 +124,14 @@
                 // Proses Login Firebase
                 await signInWithEmailAndPassword(auth, dummyEmail, inputPassword);
                 
-                // Jika berhasil, arahkan ke halaman admin kobong
-                window.location.href = 'admin-kobong.html';
+               // Pengecekan cerdas: Apakah yang login ini Super Admin atau Ketua Kobong?
+if (inputUsername === 'admin') {
+    // Arahkan ke halaman Super Admin (GANTI 'index.html' DENGAN NAMA FILE SUPER ADMIN-MU)
+    window.location.href = 'admin-umum'; 
+} else {
+    // Arahkan ketua ke halaman formulir absensi
+    window.location.href = 'admin-kobong.html';
+}
 
             } catch (error) {
                 let pesanError = "Gagal login. Silakan coba lagi.";
