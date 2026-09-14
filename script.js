@@ -1,176 +1,164 @@
 /*
- * SCRIPT UTAMA ABSENSI - VERSI STABIL
+ * SCRIPT UTAMA ABSENSI - VERSI STABIL + KODE LINK UNIK
  *
- * Penting:
- * - Tidak mengubah struktur HTML/CSS lama.
- * - Fitur absensi lama tetap dijalankan dari versi script stabil.
- * - Menambahkan link unik ?kode=KBG-... tanpa mengubah tampilan/form absensi.
- * - Link lama ?kobong=... tetap kompatibel.
+ * Prinsip:
+ * - Seluruh sistem lama tetap dijalankan oleh script stabil.
+ * - Data Firestore lama tidak diubah, dipindah, atau dihapus.
+ * - Laporan lama tetap memakai field `kobong` seperti sebelumnya.
+ * - Kode unik hanya menjadi identitas/link alternatif untuk membuka kobong.
+ * - Link lama ?kobong=... tetap 100% kompatibel.
+ * - Tidak membuat Firebase app kedua.
  */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-    getFirestore,
-    collection,
-    onSnapshot,
-    doc,
-    updateDoc,
-    query,
-    where,
-    getDocs
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyClHDzTGncpd_5-Gnc4zmL3JVrXX1tiGKQ",
-    authDomain: "admin-hu-874c2.firebaseapp.com",
-    projectId: "admin-hu-874c2",
-    storageBucket: "admin-hu-874c2.firebasestorage.app",
-    messagingSenderId: "419870283564",
-    appId: "1:419870283564:web:18054f24b31b52eb7b7e89"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
 // ===========================================================
-// LINK UNIK KOBONG
+// KODE UNIK KOBONG (DETERMINISTIK, TANPA MENGUBAH FIRESTORE)
 // ===========================================================
-function buatKodeLinkUnik() {
-    const waktu = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `KBG-${waktu}-${random}`;
+function bytesToBase64Url(bytes) {
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
 }
 
-function buatLinkAbsensi(kodeLink) {
-    if (!kodeLink) return '';
-    const url = new URL('admin-kobong.html', window.location.href);
-    url.search = `?kode=${encodeURIComponent(kodeLink)}`;
-    return url.href;
+function base64UrlToBytes(value) {
+    const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
 }
 
-async function cariKobongDariKode(kode) {
-    if (!kode) return null;
+function encodeKobongId(id) {
+    return bytesToBase64Url(new TextEncoder().encode(String(id)));
+}
 
+function decodeKobongId(value) {
     try {
-        const q = query(
-            collection(db, 'master_santri'),
-            where('kode_link', '==', kode)
-        );
-
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) return null;
-
-        const hasil = snapshot.docs[0];
-        return {
-            id: hasil.id,
-            data: hasil.data()
-        };
+        return new TextDecoder().decode(base64UrlToBytes(value));
     } catch (error) {
-        console.error('Gagal mencari kode link kobong:', error);
         return null;
     }
 }
 
+function hashKobong(value) {
+    let hash = 2166136261;
+    const text = String(value);
+    for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36).toUpperCase();
+}
+
+function buatKodeUnikKobong(idKobong) {
+    return `KBG-${encodeKobongId(idKobong)}-${hashKobong(idKobong)}`;
+}
+
+function buatLinkAbsensiUnik(idKobong) {
+    const url = new URL('admin-kobong.html', window.location.href);
+    url.search = `?kode=${encodeURIComponent(buatKodeUnikKobong(idKobong))}`;
+    return url.href;
+}
+
+function ambilIdDariKode(kode) {
+    const value = String(kode || '').trim().toUpperCase();
+    const match = /^KBG-([A-Z0-9_-]+)-([A-Z0-9]+)$/.exec(value);
+    if (!match) return null;
+
+    const id = decodeKobongId(match[1]);
+    if (!id) return null;
+
+    // Validasi supaya kode tidak bisa menunjuk ke ID lain secara tidak sengaja.
+    if (buatKodeUnikKobong(id) !== value) return null;
+    return id;
+}
+
 // ===========================================================
-// BACKFILL KODE LINK + PANEL LINK DI HALAMAN DATA SANTRI
+// ROUTING ?kode=... -> ?kobong=...
 // ===========================================================
-function jalankanManajemenLinkUnik() {
+function prosesLinkUnik() {
+    const params = new URLSearchParams(window.location.search);
+    const kode = params.get('kode');
+    const formAbsensi = document.getElementById('form-absensi');
+
+    if (!kode || !formAbsensi) return;
+
+    const idKobong = ambilIdDariKode(kode);
+    if (!idKobong) {
+        const judul = document.getElementById('nama-kobong');
+        if (judul) judul.innerText = 'Link Absensi Tidak Valid';
+        return;
+    }
+
+    // Script stabil lama tetap membaca ?kobong=...
+    const urlBaru = new URL(window.location.href);
+    urlBaru.search = `?kobong=${encodeURIComponent(idKobong)}`;
+    window.history.replaceState({}, '', urlBaru.href);
+}
+
+// ===========================================================
+// TAMPILKAN KODE + LINK UNIK DI KARTU DATA KOBONG
+// Script lama tetap menjadi sumber data utama.
+// ===========================================================
+function pasangLinkUnikPadaKartu() {
     const container = document.getElementById('container-daftar-kobong');
     if (!container) return;
 
-    onSnapshot(collection(db, 'master_santri'), async (snapshot) => {
-        const dataKobong = [];
+    const kartu = container.querySelectorAll('.master-santri-box');
 
-        for (const snap of snapshot.docs) {
-            const data = snap.data();
-            let kodeLink = data.kode_link;
+    kartu.forEach(box => {
+        if (box.querySelector('.panel-link-unik-lokal')) return;
 
-            // Hanya membuat kode jika belum ada.
-            // Tidak mengubah kode yang sudah pernah dibuat.
-            if (!kodeLink) {
-                kodeLink = buatKodeLinkUnik();
-                try {
-                    await updateDoc(doc(db, 'master_santri', snap.id), {
-                        kode_link: kodeLink
-                    });
-                } catch (error) {
-                    console.error(`Gagal membuat kode link untuk ${snap.id}:`, error);
-                }
-            }
-
-            dataKobong.push({
-                id: snap.id,
-                nama: data.nama_kobong || snap.id,
-                kode: kodeLink
-            });
+        let idKobong = null;
+        const tombolHapus = box.querySelector('.btn-delete-kobong');
+        if (tombolHapus) {
+            const onclick = tombolHapus.getAttribute('onclick') || '';
+            const match = onclick.match(/hapusKobong\('([^']+)'\)/);
+            if (match) idKobong = match[1];
         }
 
-        // Panel ini berdiri sendiri dan tidak menyentuh struktur kartu lama.
-        let panel = document.getElementById('panel-link-unik');
-
-        if (!panel) {
-            panel = document.createElement('div');
-            panel.id = 'panel-link-unik';
-            panel.style.cssText = [
-                'margin: 18px 0;',
-                'padding: 16px;',
-                'border: 1px solid #d9d9d9;',
-                'border-radius: 12px;',
-                'background: #fff;',
-                'box-sizing: border-box;',
-                'width: 100%;'
-            ].join('');
-
-            container.parentNode.insertBefore(panel, container);
+        const judul = box.querySelector('h3');
+        if (!idKobong && judul) {
+            idKobong = judul.textContent.replace(/^\s*Kobong\s*/i, '').trim();
         }
 
-        dataKobong.sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
+        if (!idKobong) return;
 
+        const kode = buatKodeUnikKobong(idKobong);
+        const link = buatLinkAbsensiUnik(idKobong);
+
+        const panel = document.createElement('div');
+        panel.className = 'panel-link-unik-lokal';
+        panel.style.cssText = 'margin:10px 0 0;padding:10px;border:1px solid #e0e0e0;border-radius:8px;box-sizing:border-box;background:#fafafa;';
         panel.innerHTML = `
-            <div style="margin-bottom:12px;">
-                <strong style="font-size:17px;">🔗 Link Absensi Unik</strong>
-                <div style="font-size:13px;color:#666;margin-top:4px;">
-                    Setiap kobong mempunyai link sendiri. Link lama ?kobong=... tetap bisa digunakan.
-                </div>
-            </div>
-            ${dataKobong.length === 0
-                ? '<div style="color:#888;">Belum ada data kobong.</div>'
-                : dataKobong.map(item => {
-                    const link = buatLinkAbsensi(item.kode);
-                    return `
-                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:10px;border:1px solid #eee;border-radius:8px;box-sizing:border-box;">
-                            <div style="flex:1 1 180px;min-width:0;">
-                                <strong>Kobong ${escapeHtml(item.nama)}</strong><br>
-                                <small style="color:#777;word-break:break-all;">${escapeHtml(item.kode)}</small>
-                            </div>
-                            <button type="button" class="btn-copy-link-unik" data-link="${escapeHtml(link)}" style="border:0;border-radius:8px;padding:9px 12px;cursor:pointer;">
-                                Salin Link
-                            </button>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="font-size:0.85rem;margin-bottom:5px;"><strong>🔗 Kode Unik Absensi</strong></div>
+            <div style="font-size:0.8rem;color:#666;word-break:break-all;margin-bottom:8px;">${escapeHtmlUnik(kode)}</div>
+            <button type="button" class="btn-copy-link-unik-lokal" style="border:0;border-radius:7px;padding:8px 12px;cursor:pointer;">Salin Link Absensi</button>
         `;
 
-        panel.querySelectorAll('.btn-copy-link-unik').forEach(button => {
-            button.addEventListener('click', async () => {
-                const link = button.dataset.link;
-                try {
-                    await navigator.clipboard.writeText(link);
-                    const teksLama = button.innerText;
-                    button.innerText = '✓ Tersalin';
-                    setTimeout(() => {
-                        button.innerText = teksLama;
-                    }, 1500);
-                } catch (error) {
-                    // Fallback untuk browser yang memblokir clipboard API.
-                    window.prompt('Salin link absensi berikut:', link);
-                }
-            });
+        panel.querySelector('button').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(link);
+                const button = panel.querySelector('button');
+                const oldText = button.textContent;
+                button.textContent = '✓ Link Tersalin';
+                setTimeout(() => { button.textContent = oldText; }, 1500);
+            } catch (error) {
+                window.prompt('Salin link absensi berikut:', link);
+            }
         });
+
+        box.appendChild(panel);
     });
 }
 
-function escapeHtml(value) {
+function escapeHtmlUnik(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -180,44 +168,24 @@ function escapeHtml(value) {
 }
 
 // ===========================================================
-// ROUTING LINK UNIK
+// JALANKAN SISTEM LAMA TANPA MENGUBAH LOGIKA/DATA LAMA
 // ===========================================================
-async function mulai() {
-    const params = new URLSearchParams(window.location.search);
-    const kode = (params.get('kode') || '').trim().toUpperCase();
-    const halamanKobong = document.getElementById('form-absensi');
+(async function jalankanSistem() {
+    try {
+        // Terjemahkan link unik sebelum script lama membaca URL.
+        prosesLinkUnik();
 
-    // Halaman data-santri tetap menggunakan script stabil lama,
-    // sementara generator link unik berjalan di sampingnya.
-    jalankanManajemenLinkUnik();
+        // Jalankan tepat script stabil sebelum perubahan besar.
+        await import('https://raw.githubusercontent.com/huonline/absensi/5f5b4f465d37bb7c422ff6e30a8ce076ed34777f/script.js');
 
-    if (kode && halamanKobong) {
-        const hasil = await cariKobongDariKode(kode);
-
-        if (!hasil) {
-            const judul = document.getElementById('nama-kobong');
-            if (judul) {
-                judul.innerText = 'Link Absensi Tidak Ditemukan';
-            }
-            alert('Link absensi tidak ditemukan atau sudah tidak tersedia.');
-            return;
+        // Tambahkan link unik hanya pada halaman master data.
+        const container = document.getElementById('container-daftar-kobong');
+        if (container) {
+            const observer = new MutationObserver(() => pasangLinkUnikPadaKartu());
+            observer.observe(container, { childList: true, subtree: true });
+            pasangLinkUnikPadaKartu();
         }
-
-        // Script lama bekerja berdasarkan ?kobong=...
-        // Kita hanya menerjemahkan link unik ke format lama.
-        const urlBaru = new URL(window.location.href);
-        urlBaru.search = `?kobong=${encodeURIComponent(hasil.id)}`;
-        window.history.replaceState({}, '', urlBaru.href);
+    } catch (error) {
+        console.error('Gagal menjalankan sistem absensi:', error);
     }
-
-    // =======================================================
-    // JALANKAN SCRIPT LAMA YANG SUDAH TERBUKTI RESPONSIVE
-    // =======================================================
-    // Commit ini adalah versi sebelum perubahan besar yang membuat
-    // tampilan mobile berubah. Tidak ada perubahan CSS/DOM dari sini.
-    await import('https://raw.githubusercontent.com/huonline/absensi/5f5b4f465d37bb7c422ff6e30a8ce076ed34777f/script.js');
-}
-
-mulai().catch(error => {
-    console.error('Gagal menjalankan sistem absensi:', error);
-});
+})();
