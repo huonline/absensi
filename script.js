@@ -110,7 +110,45 @@ if (!rawKobong && kodeUnikParam) {
 }
 
 const namaKobong = decodeURIComponent(rawKobong).trim().toUpperCase();
+// ===========================================================
+// DYNAMIC MANIFEST (AGAR BISA DIINSTAL JADI BANYAK APLIKASI DI HP)
+// ===========================================================
+if (namaKobong) {
+    // Cari alamat asli web kamu agar gambar logo tidak error
+    const urlRoot = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+    
+    const manifestDinamic = {
+        // "id" yang berbeda akan memaksa HP menganggap ini aplikasi baru
+        "id": "absensi-" + namaKobong.replace(/\s+/g, '-').toLowerCase(),
+        "short_name": "Kbg " + namaKobong,
+        "name": "Absensi Kobong " + namaKobong,
+        "start_url": window.location.href, // Kunci: Simpan URL unik kobong ini
+        "display": "standalone",
+        "background_color": "#f4f7f6",
+        "theme_color": "#2e7d32",
+        "icons": [
+            {
+                "src": urlRoot + "/LOGO%20HU%20NEW.jpg",
+                "sizes": "192x192",
+                "type": "image/jpeg"
+            },
+            {
+                "src": urlRoot + "/LOGO%20HU%20NEW.jpg",
+                "sizes": "512x512",
+                "type": "image/jpeg"
+            }
+        ]
+    };
 
+    const stringManifest = JSON.stringify(manifestDinamic);
+    const blobManifest = new Blob([stringManifest], { type: 'application/json' });
+    const urlManifest = URL.createObjectURL(blobManifest);
+    
+    const linkElem = document.createElement('link');
+    linkElem.rel = 'manifest';
+    linkElem.href = urlManifest;
+    document.head.appendChild(linkElem);
+}
 const headerTitle = document.getElementById('nama-kobong');
 if (headerTitle) {
     if (namaKobong) {
