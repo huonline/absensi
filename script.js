@@ -400,7 +400,7 @@ function renderChart(rekapKobong) {
 }
 
 // -----------------------------------------------------------
-// 3. PAGE DATA SANTRI (Ketua, Wakil, Anggota & Edit Pengurus)
+// 3. PAGE DATA SANTRI (Render + Generasi Link Unik)
 // -----------------------------------------------------------
 const formSantriKobong = document.getElementById('form-santri-kobong');
 const containerDaftarKobong = document.getElementById('container-daftar-kobong');
@@ -444,6 +444,7 @@ if (formSantriKobong) {
         }
     });
 
+    // RENDER KARTU KOBONG LENGKAP DENGAN LINK UNIK
     onSnapshot(collection(db, "master_santri"), (snapshot) => {
         containerDaftarKobong.innerHTML = '';
 
@@ -456,6 +457,10 @@ if (formSantriKobong) {
             const dataKobong = docSnap.data();
             const idKobong = docSnap.id;
             const anggotaList = dataKobong.anggota || [];
+
+            // MEMBUAT LINK UNIK
+            const kodeUnik = buatKodeUnikKobong(idKobong);
+            const linkUnik = buatLinkAbsensiUnik(idKobong);
 
             const boxKobong = document.createElement('div');
             boxKobong.className = 'master-santri-box';
@@ -470,6 +475,14 @@ if (formSantriKobong) {
                         <strong>Ketua:</strong> ${dataKobong.ketua || '-'} | <strong>Wakil:</strong> ${dataKobong.wakil || '-'}
                     </p>
                 </div>
+                
+                <!-- BOX LINK UNIK (DIPASTIKAN MUNCUL) -->
+                <div style="margin:10px 0 14px; padding:10px 12px; border:1px solid #c8e6c9; border-radius:8px; background:#f1f8e9;">
+                    <div style="font-size:0.85rem; margin-bottom:4px; color:#2e7d32;"><strong>🔗 Link Unik Absensi:</strong></div>
+                    <div style="font-size:0.75rem; color:#444; word-break:break-all; margin-bottom:8px; background:#ffffff; padding:6px 8px; border-radius:4px; border:1px solid #dcdcdc;">${linkUnik}</div>
+                    <button type="button" onclick="salinLinkAbsensi('${linkUnik}', this)" style="border:0; border-radius:6px; padding:6px 14px; background:#2e7d32; color:#ffffff; font-size:0.8rem; font-weight:600; cursor:pointer;">Salin Link Absensi</button>
+                </div>
+
                 <div style="font-size: 0.9rem;">
                     <strong>Anggota (${anggotaList.length} Santri):</strong>
             `;
@@ -493,6 +506,22 @@ if (formSantriKobong) {
         });
     });
 }
+
+// FUNGSI UNTUK SALIN LINK UNIK KE CLIPBOARD
+window.salinLinkAbsensi = async function(link, buttonEl) {
+    try {
+        await navigator.clipboard.writeText(link);
+        const textAwal = buttonEl.textContent;
+        buttonEl.textContent = '✓ Link Tersalin';
+        buttonEl.style.background = '#1b5e20';
+        setTimeout(() => { 
+            buttonEl.textContent = textAwal; 
+            buttonEl.style.background = '#2e7d32';
+        }, 1500);
+    } catch (err) {
+        window.prompt('Salin link absensi berikut:', link);
+    }
+};
 
 // FUNGSI UNTUK EDIT / GANTI KETUA DAN WAKIL KOBONG
 window.editPengurusKobong = async function(idKobong, ketuaLama, wakilLama) {
