@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { 
     getFirestore, collection, addDoc, onSnapshot, doc, 
     updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, 
-    arrayRemove, query, orderBy, where 
+    arrayRemove, query, orderBy, where, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { 
     getAuth, onAuthStateChanged, signOut 
@@ -41,7 +41,6 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Fungsi Logout Global
 window.logoutApp = function() {
     signOut(auth).then(() => {
         window.location.replace('login.html');
@@ -50,9 +49,8 @@ window.logoutApp = function() {
     });
 };
 
-// Fungsi Membuat Menu Navigasi Melayang Otomatis
 function pasangMenuNavigasi(user) {
-    if (document.getElementById('nav-menu-kiri')) return; // Cegah menu ganda
+    if (document.getElementById('nav-menu-kiri')) return; 
     
     const username = user.email.split('@')[0];
     
@@ -77,14 +75,12 @@ function pasangMenuNavigasi(user) {
 
     document.body.insertAdjacentHTML('beforeend', htmlNav);
 
-    // Event buka tutup menu
     document.getElementById('btn-toggle-menu').addEventListener('click', (e) => {
         e.stopPropagation(); 
         const dropdown = document.getElementById('dropdown-menu');
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     });
     
-    // Tutup menu otomatis jika user mengklik area lain di layar
     document.addEventListener('click', (e) => {
         const menuKiri = document.getElementById('nav-menu-kiri');
         if (menuKiri && !menuKiri.contains(e.target)) {
@@ -250,43 +246,64 @@ function jalankanAplikasi(user) {
             const sekarang = new Date();
             const tglInfo = sekarang.toLocaleDateString('id-ID');
             const waktuInfo = document.getElementById('waktu').value;
-            const keyAbsen = `absen_${namaKobongAktif}_${tglInfo}_${waktuInfo}`;
-
-            if (localStorage.getItem(keyAbsen)) return alert(`⚠️ Laporan (${waktuInfo}) hari ini sudah dikirim!`);
-            if (listAnggotaAktif.length === 0) return alert('Tidak ada santri yang dapat di-absen.');
-
             const btnSubmit = formAbsensi.querySelector('button[type="submit"]');
-            const namaPelapor = document.getElementById('nama-pelapor').value.trim();
-            const catatan = document.getElementById('catatan').value.trim();
 
-            const detailPresensi = [];
-            let hadir = 0, sakit = 0, izin = 0, alfa = 0;
-            const santriTidakHadir = [];
-
-            listAnggotaAktif.forEach((nama, idx) => {
-                const radio = document.querySelector(`input[name="status_santri_${idx}"]:checked`);
-                const stat = radio ? radio.value : 'Hadir';
-                detailPresensi.push({ nama, status: stat });
-                
-                if (stat === 'Hadir') hadir++;
-                else {
-                    if (stat === 'Sakit') sakit++;
-                    if (stat === 'Izin') izin++;
-                    if (stat === 'Alfa') alfa++;
-                    santriTidakHadir.push(`${nama} (${stat})`);
-                }
-            });
-
-            const statusGlobal = (hadir === listAnggotaAktif.length) ? 'Lengkap' : 'Tidak Lengkap';
-            let catatanFinal = catatan;
-            if (santriTidakHadir.length > 0) {
-                const rincian = `Tidak Hadir: ${santriTidakHadir.join(', ')}`;
-                catatanFinal = catatan ? `${catatan}\n${rincian}` : rincian;
-            }
+            if (listAnggotaAktif.length === 0) return alert('Tidak ada santri yang dapat di-absen.');
 
             try {
                 btnSubmit.disabled = true;
+                btnSubmit.innerText = 'Memeriksa Database...';
+
+                // ===========================================================
+                // FITUR ANTI DOUBLE-SUBMIT (CEK LANGSUNG KE FIREBASE)
+                // ===========================================================
+                const qCek = query(
+                    collection(db, "laporan_absensi"),
+                    where("kobong", "==", namaKobongAktif),
+                    where("tanggal", "==", tglInfo),
+                    where("waktu", "==", waktuInfo)
+                );
+                
+                const cekSnapshot = await getDocs(qCek);
+                
+                if (!cekSnapshot.empty) {
+                    alert(`⚠️ GAGAL DIKIRIM!\nLaporan absensi Kobong ${namaKobongAktif} sesi ${waktuInfo} hari ini SUDAH DIKIRIM (mungkin oleh perangkat/pengurus lain).`);
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = 'Kirim Laporan';
+                    return; // Hentikan proses, jangan sampai masuk database lagi!
+                }
+                // ===========================================================
+
                 btnSubmit.innerText = 'Mengirim...';
+                
+                const namaPelapor = document.getElementById('nama-pelapor').value.trim();
+                const catatan = document.getElementById('catatan').value.trim();
+
+                const detailPresensi = [];
+                let hadir = 0, sakit = 0, izin = 0, alfa = 0;
+                const santriTidakHadir = [];
+
+                listAnggotaAktif.forEach((nama, idx) => {
+                    const radio = document.querySelector(`input[name="status_santri_${idx}"]:checked`);
+                    const stat = radio ? radio.value : 'Hadir';
+                    detailPresensi.push({ nama, status: stat });
+                    
+                    if (stat === 'Hadir') hadir++;
+                    else {
+                        if (stat === 'Sakit') sakit++;
+                        if (stat === 'Izin') izin++;
+                        if (stat === 'Alfa') alfa++;
+                        santriTidakHadir.push(`${nama} (${stat})`);
+                    }
+                });
+
+                const statusGlobal = (hadir === listAnggotaAktif.length) ? 'Lengkap' : 'Tidak Lengkap';
+                let catatanFinal = catatan;
+                if (santriTidakHadir.length > 0) {
+                    const rincian = `Tidak Hadir: ${santriTidakHadir.join(', ')}`;
+                    catatanFinal = catatan ? `${catatan}\n${rincian}` : rincian;
+                }
+
                 await addDoc(collection(db, "laporan_absensi"), {
                     kobong: namaKobongAktif, nama: namaPelapor, waktu: waktuInfo, status: statusGlobal,
                     catatan: catatanFinal || '-', detail_presensi: detailPresensi,
@@ -294,7 +311,7 @@ function jalankanAplikasi(user) {
                     createdAt: new Date(), tanggal: tglInfo, 
                     jam: sekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                 });
-                localStorage.setItem(keyAbsen, 'true');
+                
                 alert('Berhasil dikirim!');
                 window.location.reload();
             } catch (err) {
@@ -387,12 +404,11 @@ function jalankanAplikasi(user) {
     }
 
     // -----------------------------------------------------------
-    // 3. TAMBAH & EDIT DATA KOBONG (DILENGKAPI USERNAME LOGIN)
+    // 3. TAMBAH & EDIT DATA KOBONG
     // -----------------------------------------------------------
     const formSantriKobong = document.getElementById('form-santri-kobong');
     const containerDaftarKobong = document.getElementById('container-daftar-kobong');
 
-    // MENGGUNAKAN METODE PENGAMBILAN DARI DATABASE AGAR ANTI ERROR KARAKTER KHUSUS
     window.editPengurusKobong = async function(idKobong) {
         try {
             const docRef = doc(db, "master_santri", idKobong);
