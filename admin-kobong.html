@@ -3,198 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin - Monitoring Absensi</title>
+    <title>Form Absensi Kobong</title>
     
     <link rel="icon" type="image/jpeg" href="LOGO%20HU%20NEW.jpg">
     <link rel="apple-touch-icon" href="LOGO%20HU%20NEW.jpg">
     <link rel="manifest" href="manifest.json">
 
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- CSS KHUSUS TAB & FILTER -->
-    <style>
-        @media print {
-            .btn-nav, .filter-box, .btn-action-group, header p, .tab-container {
-                display: none !important;
-            }
-            .container { width: 100% !important; max-width: 100% !important; padding: 0 !important; }
-            body { background: #fff !important; color: #000 !important; }
-            .admin-section { box-shadow: none !important; border: none !important; padding: 0 !important; }
-            /* Munculkan semua saat di-print */
-            #seksi-laporan, #seksi-santri { display: block !important; }
-        }
-        .btn-action-group { display: flex; gap: 10px; margin-top: 10px; margin-bottom: 15px; }
-        .btn-print { flex: 1; background: #1565c0; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-copy { flex: 1; background: #2e7d32; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 10px; margin-bottom: 15px; }
-        .filter-item { display: flex; flex-direction: column; gap: 4px; }
-        .filter-item label { font-size: 0.85rem; font-weight: bold; color: #2e7d32; }
-        .filter-item input, .filter-item select { padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; outline: none; }
-        
-        /* DESAIN MENU TAB */
-        .tab-container {
-            display: flex; gap: 10px; margin: 20px 0 10px 0;
-        }
-        .tab-btn {
-            flex: 1; padding: 12px; font-weight: bold; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .tab-active { background-color: #2e7d32; color: white; border-bottom: 4px solid #1b5e20; }
-        .tab-inactive { background-color: #e0e0e0; color: #555; border-bottom: 4px solid #bdbdbd; }
-    </style>
 </head>
 <body>
 
-    <div class="container container-large">
+    <div class="container">
+        <!-- HEADER KOBONG -->
         <header class="header">
-            <h1>Dashboard Super Admin</h1>
-            <p>Pusat Monitoring & Grafik Persentase Absensi Santri (35 Kobong)</p>
-            
-            <div style="margin-top: 12px;">
-                <a href="data-santri.html" class="btn-nav" style="display: inline-block; width: 100%; text-align: center; box-sizing: border-box; padding: 10px;">
-                    Kelola Data Santri &rarr;
-                </a>
-            </div>
+            <h1 id="nama-kobong">Memuat Data...</h1>
+            <p style="background: #e8f5e9; padding: 10px; border-radius: 6px; display: inline-block; border: 1px solid #c8e6c9;">
+                <span id="detail-pengurus">Memeriksa database...</span>
+            </p>
         </header>
 
-        <!-- SEKSI 1: GRAFIK PERSENTASE -->
+        <!-- FORM ABSENSI -->
         <section class="admin-section">
-            <h2>Persentase Kehadiran</h2>
-            <div class="chart-box">
-                <canvas id="grafikKehadiran"></canvas>
-            </div>
-        </section>
+            <form id="form-absensi">
+                
+                <!-- PILIHAN WAKTU (Sudah dikunci hanya Malam/Tidur) -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="waktu"><strong>Waktu Absensi:</strong></label>
+                    <select id="waktu" name="waktu" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; margin-top: 5px;">
+                        <option value="Subuh" disabled style="color: #ccc;">🌅 Subuh </option>
+                        <option value="Zuhur" disabled style="color: #ccc;">☀️ Zuhur </option>
+                        <option value="Ashar" disabled style="color: #ccc;">🌤️ Ashar </option>
+                        <option value="Maghrib" disabled style="color: #ccc;">🌆 Maghrib </option>
+                        <option value="Isya" disabled style="color: #ccc;">🌙 Isya </option>
+                        <option value="Malam" selected style="font-weight: bold; color: #2e7d32;">🛌 Malam / Tidur</option>
+                    </select>
+                </div>
 
-        <!-- TOMBOL MENU TAB (SWITCHER) -->
-        <div class="tab-container">
-            <button id="btn-tab-laporan" class="tab-btn tab-active" onclick="bukaTab('laporan')">📝 Laporan Harian</button>
-            <button id="btn-tab-santri" class="tab-btn tab-inactive" onclick="bukaTab('santri')">👤 Rekap Per Santri</button>
-        </div>
+                <!-- NAMA PELAPOR -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="nama-pelapor"><strong>Nama Pengurus (Pelapor):</strong></label>
+                    <input type="text" id="nama-pelapor" placeholder="Masukkan nama Anda..." required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; margin-top: 5px;">
+                </div>
+
+                <!-- DAFTAR CEKLIS SANTRI (Auto Generate dari JS) -->
+                <div class="form-group" style="margin-bottom: 15px; border-top: 2px dashed #eee; padding-top: 15px;">
+                    <label><strong id="total-anggota" style="font-size: 1.1rem; color: #1b5e20;">Anggota Santri:</strong></label>
+                    
+                    <div id="container-ceklis-santri" style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px;">
+                        <p style="color: #888;">Memuat daftar santri...</p>
+                    </div>
+                </div>
+
+                <!-- CATATAN TAMBAHAN -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="catatan"><strong>Catatan Tambahan (Opsional):</strong></label>
+                    <textarea id="catatan" rows="3" placeholder="Tulis alasan jika ada santri yang Sakit / Izin / Alfa..." style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; margin-top: 5px;"></textarea>
+                </div>
+
+                <!-- TOMBOL KIRIM -->
+                <button type="submit" style="width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    Kirim Laporan
+                </button>
+            </form>
+        </section>
 
         <hr class="divider">
 
-        <!-- ========================================== -->
-        <!-- SEKSI 2: TAB LAPORAN HARIAN                -->
-        <!-- ========================================== -->
-        <div id="seksi-laporan" style="display: block;">
-            <section class="admin-section">
-                <h2>Laporan Masuk</h2>
-
-                <div class="btn-action-group">
-                    <button onclick="window.print()" class="btn-print">🖨️ Cetak / Simpan PDF</button>
-                    <button onclick="salinRekapTeks()" class="btn-copy">📋 Salin Ringkasan WA</button>
-                </div>
-
-                <div class="filter-box">
-                    <div class="filter-grid">
-                        <div class="filter-item">
-                            <label for="filter-kobong">Filter Kobong:</label>
-                            <select id="filter-kobong">
-                                <option value="ALL">-- Semua Kobong --</option>
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label for="filter-tanggal">Filter Tanggal:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <input type="date" id="filter-tanggal" style="flex: 1;">
-                                <button type="button" id="btn-reset-tanggal" style="background: #757575; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">Reset</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Waktu</th>
-                                <th>Kobong</th>
-                                <th>Pelapor</th>
-                                <th>Laporan</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabel-laporan">
-                            <tr>
-                                <td colspan="5" class="text-center">Memuat data laporan...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- SEKSI 3: TAB REKAP PER SANTRI              -->
-        <!-- ========================================== -->
-        <div id="seksi-santri" style="display: none;">
-            <section class="admin-section">
-                <h2>📊 Rekap Kehadiran Per Santri</h2>
-
-                <div class="filter-box">
-                    <div class="filter-grid">
-                        <div class="filter-item">
-                            <label for="filter-kobong-santri">Filter Kobong:</label>
-                            <select id="filter-kobong-santri">
-                                <option value="ALL">-- Semua Kobong --</option>
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label for="cari-nama-santri">Cari Nama Santri:</label>
-                            <input type="text" id="cari-nama-santri" placeholder="Ketik nama santri...">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama Santri</th>
-                                <th>Kobong</th>
-                                <th style="color: green;">Hadir</th>
-                                <th style="color: orange;">Sakit</th>
-                                <th style="color: blue;">Izin</th>
-                                <th style="color: red;">Alfa</th>
-                                <th>Persentase</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabel-rekap-santri">
-                            <tr>
-                                <td colspan="8" class="text-center">Memuat rekap data santri...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+        <!-- RIWAYAT ABSENSI KOBONG -->
+        <section class="admin-section">
+            <h2>Riwayat Laporan Kobong Ini</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Kobong</th>
+                            <th>Pelapor</th>
+                            <th>Catatan</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-riwayat-kobong">
+                        <tr>
+                            <td colspan="5" class="text-center">Memuat riwayat absen...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     </div>
 
-    <!-- SCRIPT KHUSUS UNTUK GANTI TAB -->
-    <script>
-        function bukaTab(namaTab) {
-            // Sembunyikan semua tabel
-            document.getElementById('seksi-laporan').style.display = 'none';
-            document.getElementById('seksi-santri').style.display = 'none';
-            
-            // Ubah warna semua tombol jadi abu-abu (inactive)
-            document.getElementById('btn-tab-laporan').className = 'tab-btn tab-inactive';
-            document.getElementById('btn-tab-santri').className = 'tab-btn tab-inactive';
-            
-            // Tampilkan tabel & hijaukan tombol yang diklik
-            if(namaTab === 'laporan') {
-                document.getElementById('seksi-laporan').style.display = 'block';
-                document.getElementById('btn-tab-laporan').className = 'tab-btn tab-active';
-            } else if (namaTab === 'santri') {
-                document.getElementById('seksi-santri').style.display = 'block';
-                document.getElementById('btn-tab-santri').className = 'tab-btn tab-active';
-            }
-        }
-    </script>
-
+    <!-- PANGGIL SCRIPT UTAMA -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
