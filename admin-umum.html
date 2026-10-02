@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- CSS KHUSUS CETAK/PRINT -->
+    <!-- CSS KHUSUS CETAK/PRINT & FILTER -->
     <style>
         @media print {
             .btn-nav, .filter-box, .btn-action-group, header p {
@@ -61,6 +61,39 @@
         }
         .btn-print:hover { background: #0d47a1; }
         .btn-copy:hover { background: #1b5e20; }
+
+        /* DESAIN AREA FILTER BARU */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-item label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .filter-item input, .filter-item select {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .filter-item input:focus, .filter-item select:focus {
+            border-color: #2e7d32;
+        }
     </style>
 </head>
 <body>
@@ -79,7 +112,7 @@
 
         <!-- SEKSI 1: GRAFIK PERSENTASE -->
         <section class="admin-section">
-            <h2>Persentase </h2>
+            <h2>Persentase Kehadiran</h2>
             <div class="chart-box">
                 <canvas id="grafikKehadiran"></canvas>
             </div>
@@ -89,7 +122,7 @@
 
         <!-- SEKSI 2: LAPORAN MASUK -->
         <section class="admin-section">
-            <h2>Laporan</h2>
+            <h2>Laporan Masuk</h2>
 
             <!-- TOMBOL CETAK & SALIN REKAP -->
             <div class="btn-action-group">
@@ -97,10 +130,32 @@
                 <button onclick="salinRekapTeks()" class="btn-copy">📋 Salin Ringkasan WA</button>
             </div>
 
-            <div class="filter-box" style="margin-top: 10px; margin-bottom: 15px;">
-                <select id="filter-kobong" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; color: #2e7d32; cursor: pointer;">
-                    <option value="ALL">-- Lihat Semua Kobong --</option>
-                </select>
+            <!-- AREA FILTER TERPADU (KOBONG, TANGGAL, & CARI TEKS) -->
+            <div class="filter-box">
+                <div class="filter-grid">
+                    <!-- 1. Filter Kobong -->
+                    <div class="filter-item">
+                        <label for="filter-kobong">Filter Kobong:</label>
+                        <select id="filter-kobong">
+                            <option value="ALL">-- Semua Kobong --</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Filter Tanggal -->
+                    <div class="filter-item">
+                        <label for="filter-tanggal">Filter Tanggal:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="date" id="filter-tanggal" style="flex: 1;">
+                            <button type="button" id="btn-reset-tanggal" style="background: #757575; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Cari Pelapor / Catatan -->
+                    <div class="filter-item">
+                        <label for="cari-teks">Pancarian Teks / Catatan:</label>
+                        <input type="text" id="cari-teks" placeholder="Ketik nama pelapor / kata kunci...">
+                    </div>
+                </div>
             </div>
 
             <!-- TABEL LAPORAN -->
