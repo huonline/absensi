@@ -244,7 +244,8 @@ function jalankanAplikasi(user) {
             if (!cekBatasWaktuAbsensi()) return alert('⚠️ AKSES DITUTUP!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 23:30 WIB.');
             
             const sekarang = new Date();
-            const tglInfo = sekarang.toLocaleDateString('id-ID');
+            const tglInfo = sekarang.toLocaleDateString('id-ID'); // Format: DD/MM/YYYY
+            const tglISO = sekarang.toISOString().split('T')[0];  // Format: YYYY-MM-DD
             const waktuInfo = document.getElementById('waktu').value;
             const btnSubmit = formAbsensi.querySelector('button[type="submit"]');
 
@@ -254,9 +255,7 @@ function jalankanAplikasi(user) {
                 btnSubmit.disabled = true;
                 btnSubmit.innerText = 'Memeriksa Database...';
 
-                // ===========================================================
-                // FITUR ANTI DOUBLE-SUBMIT (CEK LANGSUNG KE FIREBASE)
-                // ===========================================================
+                // ANTI DOUBLE-SUBMIT (DATABASE LEVEL)
                 const qCek = query(
                     collection(db, "laporan_absensi"),
                     where("kobong", "==", namaKobongAktif),
@@ -270,9 +269,8 @@ function jalankanAplikasi(user) {
                     alert(`⚠️ GAGAL DIKIRIM!\nLaporan absensi Kobong ${namaKobongAktif} sesi ${waktuInfo} hari ini SUDAH DIKIRIM (mungkin oleh perangkat/pengurus lain).`);
                     btnSubmit.disabled = false;
                     btnSubmit.innerText = 'Kirim Laporan';
-                    return; // Hentikan proses, jangan sampai masuk database lagi!
+                    return; 
                 }
-                // ===========================================================
 
                 btnSubmit.innerText = 'Mengirim...';
                 
@@ -305,10 +303,16 @@ function jalankanAplikasi(user) {
                 }
 
                 await addDoc(collection(db, "laporan_absensi"), {
-                    kobong: namaKobongAktif, nama: namaPelapor, waktu: waktuInfo, status: statusGlobal,
-                    catatan: catatanFinal || '-', detail_presensi: detailPresensi,
+                    kobong: namaKobongAktif, 
+                    nama: namaPelapor, 
+                    waktu: waktuInfo, 
+                    status: statusGlobal,
+                    catatan: catatanFinal || '-', 
+                    detail_presensi: detailPresensi,
                     ringkasan: { total: listAnggotaAktif.length, hadir, sakit, izin, alfa },
-                    createdAt: new Date(), tanggal: tglInfo, 
+                    createdAt: new Date(), 
+                    tanggal: tglInfo,
+                    tanggalISO: tglISO,
                     jam: sekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                 });
                 
@@ -323,10 +327,14 @@ function jalankanAplikasi(user) {
     }
 
     // -----------------------------------------------------------
-    // 2. SUPER ADMIN (Manajemen Tabel & Santri)
+    // 2. SUPER ADMIN (Manajemen Tabel + Penyekat Hari & Fitur Cari)
     // -----------------------------------------------------------
     const tabelLaporan = document.getElementById('tabel-laporan');
     const filterKobong = document.getElementById('filter-kobong');
+    const filterTanggal = document.getElementById('filter-tanggal');
+    const btnResetTanggal = document.getElementById('btn-reset-tanggal');
+    const cariTeks = document.getElementById('cari-teks');
+
     let chartKehadiran = null;
     let rawLaporanData = [];
 
@@ -335,6 +343,7 @@ function jalankanAplikasi(user) {
         onSnapshot(q, (snapshot) => {
             rawLaporanData = [];
             const setKobong = new Set();
+            
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 data.id = docSnap.id;
@@ -354,30 +363,95 @@ function jalankanAplikasi(user) {
             }
             renderTabelDanGrafik();
         });
+
         if (filterKobong) filterKobong.addEventListener('change', renderTabelDanGrafik);
+        if (filterTanggal) filterTanggal.addEventListener('change', renderTabelDanGrafik);
+        if (cariTeks) cariTeks.addEventListener('input', renderTabelDanGrafik);
+        if (btnResetTanggal) {
+            btnResetTanggal.addEventListener('click', () => {
+                filterTanggal.value = '';
+                renderTabelDanGrafik();
+            });
+        }
     }
 
+    // FUNGSI RENDER TABEL DENGAN PENYEKAT PER HARI
     function renderTabelDanGrafik() {
         if (!tabelLaporan) return;
         tabelLaporan.innerHTML = '';
-        const selectedFilter = filterKobong ? filterKobong.value : 'ALL';
-        const filteredData = rawLaporanData.filter(item => (selectedFilter === 'ALL' || item.kobong === selectedFilter));
+
+        const selectedKobong = filterKobong ? filterKobong.value : 'ALL';
+        const selectedTanggal = filterTanggal ? filterTanggal.value : ''; // Formats: YYYY-MM-DD
+        const keyword = cariTeks ? cariTeks.value.toLowerCase().trim() : '';
+
+        // Filter Data
+        const filteredData = rawLaporanData.filter(item => {
+            // Filter Kobong
+            const matchKobong = (selectedKobong === 'ALL' || item.kobong === selectedKobong);
+            
+            // Filter Tanggal
+            let matchTanggal = true;
+            if (selectedTanggal) {
+                // Konversi tanggal Firestore ke YYYY-MM-DD jika item.tanggalISO belum ada
+                let itemISO = item.tanggalISO;
+                if (!itemISO && item.tanggal) {
+                    const parts = item.tanggal.split('/'); // DD/MM/YYYY
+                    if (parts.length === 3) itemISO = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+                matchTanggal = (itemISO === selectedTanggal);
+            }
+
+            // Filter Teks (Pencarian Nama Pelapor/Catatan/Kobong)
+            let matchTeks = true;
+            if (keyword) {
+                const textTarget = `${item.nama || ''} ${item.catatan || ''} Kobong ${item.kobong || ''}`.toLowerCase();
+                matchTeks = textTarget.includes(keyword);
+            }
+
+            return matchKobong && matchTanggal && matchTeks;
+        });
 
         if (filteredData.length === 0) {
-            tabelLaporan.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada laporan.</td></tr>`;
+            tabelLaporan.innerHTML = `<tr><td colspan="5" class="text-center" style="padding: 20px; color: #888;">Tidak ada data laporan yang cocok.</td></tr>`;
         } else {
+            // Kelompokkan data berdasarkan Tanggal
+            const dikelompokkanPerTanggal = {};
             filteredData.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${item.waktu}</strong><br><small>${item.tanggal} (${item.jam})</small></td>
-                    <td><strong>Kobong ${item.kobong}</strong></td>
-                    <td>${item.nama || '-'}</td>
-                    <td style="white-space: pre-line;">${item.catatan || '-'}</td>
-                    <td><span style="color: #2e7d32; font-weight: bold;">${item.status}</span></td>
+                const keyTgl = item.tanggal || "Tanggal Tidak Diketahui";
+                if (!dikelompokkanPerTanggal[keyTgl]) dikelompokkanPerTanggal[keyTgl] = [];
+                dikelompokkanPerTanggal[keyTgl].push(item);
+            });
+
+            // Tampilkan dengan Penyekat Header Per Hari
+            Object.keys(dikelompokkanPerTanggal).forEach(tanggalHeader => {
+                const listHariIni = dikelompokkanPerTanggal[tanggalHeader];
+
+                // Bikin Baris Penyekat / Header Tanggal
+                const rowHeader = document.createElement('tr');
+                rowHeader.innerHTML = `
+                    <td colspan="5" style="background-color: #e8f5e9; color: #1b5e20; font-weight: bold; font-size: 1rem; padding: 10px; border-top: 2px solid #a5d6a7;">
+                        📅 Hari & Tanggal: ${tanggalHeader} <span style="font-weight: normal; font-size: 0.85rem; color: #333;">(${listHariIni.length} Laporan Masuk)</span>
+                    </td>
                 `;
-                tabelLaporan.appendChild(row);
+                tabelLaporan.appendChild(rowHeader);
+
+                // Baris Isian Data Laporan
+                listHariIni.forEach(item => {
+                    const row = document.createElement('tr');
+                    const statusColor = item.status === 'Lengkap' ? '#2e7d32' : '#c62828';
+                    row.innerHTML = `
+                        <td style="padding-left: 20px;"><strong>${item.waktu}</strong><br><small style="color:#666;">Jam: ${item.jam || '-'}</small></td>
+                        <td><strong>Kobong ${item.kobong}</strong></td>
+                        <td>👤 ${item.nama || '-'}</td>
+                        <td style="white-space: pre-line;">${item.catatan || '-'}</td>
+                        <td><span style="color: ${statusColor}; font-weight: bold;">${item.status}</span></td>
+                    `;
+                    tabelLaporan.appendChild(row);
+                });
             });
         }
+
+        // Hitung ulang grafik berdasarkan data terfilter
         const rekap = {};
         rawLaporanData.forEach(item => {
             if (!rekap[item.kobong]) rekap[item.kobong] = { total: 0, lengkap: 0 };
@@ -508,7 +582,7 @@ function jalankanAplikasi(user) {
                 let listHTML = `
                     <div style="margin-bottom: 12px; overflow: hidden;">
                         <button class="btn-delete-kobong" onclick="hapusKobong('${idKobong}')">Hapus Kobong</button>
-                        <button class="btn-edit-pengurus" onclick="editPengurusKobong('${idKobong}')">✏️ Edit</button>
+                        <button class="btn-edit-pengurus" onclick="editPengurusKobong('${idKobong}')">✏️️ Edit</button>
                         <h3 style="color: #2e7d32; margin: 0;">Kobong ${dataKobong.nama_kobong}</h3>
                         <p style="margin: 6px 0 4px 0; font-size: 0.85rem; color: #1b5e20;">
                             <strong>Ketua:</strong> ${dataKobong.ketua || '-'} | <strong>Wakil:</strong> ${dataKobong.wakil || '-'}<br>
