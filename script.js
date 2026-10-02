@@ -90,7 +90,7 @@ function pasangMenuNavigasi(user) {
 }
 
 // ===========================================================
-// FUNGSI CEK & KUNCI JAM (22:30 - 23:30 WIB)
+// FUNGSI CEK & KUNCI JAM (Bisa diatur bebas)
 // ===========================================================
 function cekBatasWaktuAbsensi() {
     const sekarang = new Date();
@@ -241,7 +241,7 @@ function jalankanAplikasi(user) {
             e.preventDefault();
             
             if (!namaKobongAktif) return;
-            if (!cekBatasWaktuAbsensi()) return alert('⚠️ AKSES DITUTUP!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 24:30 WIB.');
+            if (!cekBatasWaktuAbsensi()) return alert('⚠️ AKSES DITUTUP!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 24:00 WIB.');
             
             const sekarang = new Date();
             const tglInfo = sekarang.toLocaleDateString('id-ID'); // Format: DD/MM/YYYY
@@ -338,7 +338,92 @@ function jalankanAplikasi(user) {
     let chartKehadiran = null;
     let rawLaporanData = [];
 
-    if (tabelLaporan) {
+    // FUNGSI RENDER REKAP SANTRI 
+    function hitungRekapPerSantri(dataLaporan) {
+        const tabelSantri = document.getElementById('tabel-rekap-santri');
+        const filterKobongSantri = document.getElementById('filter-kobong-santri');
+        const cariNama = document.getElementById('cari-nama-santri');
+
+        if (!tabelSantri) return;
+
+        // 1. Kumpulkan semua data dari detail_presensi
+        const rekapSantri = {};
+
+        dataLaporan.forEach(laporan => {
+            if (laporan.detail_presensi && Array.isArray(laporan.detail_presensi)) {
+                laporan.detail_presensi.forEach(p => {
+                    const key = `${p.nama}_${laporan.kobong}`;
+                    
+                    if (!rekapSantri[key]) {
+                        rekapSantri[key] = {
+                            nama: p.nama,
+                            kobong: laporan.kobong,
+                            hadir: 0,
+                            sakit: 0,
+                            izin: 0,
+                            alfa: 0,
+                            total: 0
+                        };
+                    }
+
+                    rekapSantri[key].total += 1;
+                    if (p.status === 'Hadir') rekapSantri[key].hadir += 1;
+                    else if (p.status === 'Sakit') rekapSantri[key].sakit += 1;
+                    else if (p.status === 'Izin') rekapSantri[key].izin += 1;
+                    else if (p.status === 'Alfa') rekapSantri[key].alfa += 1;
+                });
+            }
+        });
+
+        // 2. Fungsi Render Baris Tabel Santri
+        function renderTabelSantri() {
+            tabelSantri.innerHTML = '';
+            const selectedKobong = filterKobongSantri ? filterKobongSantri.value : 'ALL';
+            const keyword = cariNama ? cariNama.value.toLowerCase().trim() : '';
+
+            const listSantri = Object.values(rekapSantri).filter(item => {
+                const matchKobong = (selectedKobong === 'ALL' || item.kobong === selectedKobong);
+                const matchNama = item.nama.toLowerCase().includes(keyword);
+                return matchKobong && matchNama;
+            });
+
+            // Urutkan berdasarkan persentase kehadiran terendah ke tertinggi
+            listSantri.sort((a, b) => (a.hadir / a.total) - (b.hadir / b.total));
+
+            if (listSantri.length === 0) {
+                tabelSantri.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 15px; color: #888;">Belum ada data rekapan santri.</td></tr>`;
+                return;
+            }
+
+            listSantri.forEach((s, idx) => {
+                const persen = Math.round((s.hadir / s.total) * 100);
+                let warnaPersen = '#2e7d32'; // Hijau
+                if (persen < 75) warnaPersen = '#c62828'; // Merah
+                else if (persen < 85) warnaPersen = '#f57c00'; // Oranye
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td><strong>${s.nama}</strong></td>
+                    <td>Kobong ${s.kobong}</td>
+                    <td style="color: green; font-weight: bold;">${s.hadir}</td>
+                    <td style="color: orange;">${s.sakit}</td>
+                    <td style="color: blue;">${s.izin}</td>
+                    <td style="color: red; font-weight: bold;">${s.alfa}</td>
+                    <td><span style="color: ${warnaPersen}; font-weight: bold;">${persen}%</span> <small style="color: #666;">(${s.hadir}/${s.total})</small></td>
+                `;
+                tabelSantri.appendChild(row);
+            });
+        }
+
+        renderTabelSantri();
+
+        // Event Listener khusus tabel santri
+        if (filterKobongSantri) filterKobongSantri.onchange = renderTabelSantri;
+        if (cariNama) cariNama.oninput = renderTabelSantri;
+    }
+
+    if (tabelLaporan || document.getElementById('tabel-rekap-santri')) {
         const q = query(collection(db, "laporan_absensi"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
             rawLaporanData = [];
@@ -351,6 +436,7 @@ function jalankanAplikasi(user) {
                 if (data.kobong) setKobong.add(data.kobong);
             });
 
+            // Isi Opsi Filter Kobong Laporan Utama
             if (filterKobong) {
                 const selectedVal = filterKobong.value;
                 filterKobong.innerHTML = `<option value="ALL">-- Semua Kobong --</option>`;
@@ -361,9 +447,26 @@ function jalankanAplikasi(user) {
                 });
                 filterKobong.value = selectedVal;
             }
+
+            // Isi Opsi Filter Kobong Rekap Santri
+            const filterKobongSantri = document.getElementById('filter-kobong-santri');
+            if (filterKobongSantri) {
+                const selectedValSantri = filterKobongSantri.value;
+                filterKobongSantri.innerHTML = `<option value="ALL">-- Semua Kobong --</option>`;
+                Array.from(setKobong).sort().forEach(k => {
+                    const opt = document.createElement('option');
+                    opt.value = k; opt.innerText = `Kobong ${k}`;
+                    filterKobongSantri.appendChild(opt);
+                });
+                filterKobongSantri.value = selectedValSantri;
+            }
+
+            // --- PEMANGGILAN KEDUA FUNGSI RENDER DI SINI ---
             renderTabelDanGrafik();
+            hitungRekapPerSantri(rawLaporanData);
         });
 
+        // Event Listener Laporan Utama
         if (filterKobong) filterKobong.addEventListener('change', renderTabelDanGrafik);
         if (filterTanggal) filterTanggal.addEventListener('change', renderTabelDanGrafik);
         if (cariTeks) cariTeks.addEventListener('input', renderTabelDanGrafik);
@@ -381,27 +484,23 @@ function jalankanAplikasi(user) {
         tabelLaporan.innerHTML = '';
 
         const selectedKobong = filterKobong ? filterKobong.value : 'ALL';
-        const selectedTanggal = filterTanggal ? filterTanggal.value : ''; // Formats: YYYY-MM-DD
+        const selectedTanggal = filterTanggal ? filterTanggal.value : ''; 
         const keyword = cariTeks ? cariTeks.value.toLowerCase().trim() : '';
 
         // Filter Data
         const filteredData = rawLaporanData.filter(item => {
-            // Filter Kobong
             const matchKobong = (selectedKobong === 'ALL' || item.kobong === selectedKobong);
             
-            // Filter Tanggal
             let matchTanggal = true;
             if (selectedTanggal) {
-                // Konversi tanggal Firestore ke YYYY-MM-DD jika item.tanggalISO belum ada
                 let itemISO = item.tanggalISO;
                 if (!itemISO && item.tanggal) {
-                    const parts = item.tanggal.split('/'); // DD/MM/YYYY
+                    const parts = item.tanggal.split('/'); 
                     if (parts.length === 3) itemISO = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                 }
                 matchTanggal = (itemISO === selectedTanggal);
             }
 
-            // Filter Teks (Pencarian Nama Pelapor/Catatan/Kobong)
             let matchTeks = true;
             if (keyword) {
                 const textTarget = `${item.nama || ''} ${item.catatan || ''} Kobong ${item.kobong || ''}`.toLowerCase();
@@ -414,7 +513,6 @@ function jalankanAplikasi(user) {
         if (filteredData.length === 0) {
             tabelLaporan.innerHTML = `<tr><td colspan="5" class="text-center" style="padding: 20px; color: #888;">Tidak ada data laporan yang cocok.</td></tr>`;
         } else {
-            // Kelompokkan data berdasarkan Tanggal
             const dikelompokkanPerTanggal = {};
             filteredData.forEach(item => {
                 const keyTgl = item.tanggal || "Tanggal Tidak Diketahui";
@@ -422,11 +520,8 @@ function jalankanAplikasi(user) {
                 dikelompokkanPerTanggal[keyTgl].push(item);
             });
 
-            // Tampilkan dengan Penyekat Header Per Hari
             Object.keys(dikelompokkanPerTanggal).forEach(tanggalHeader => {
                 const listHariIni = dikelompokkanPerTanggal[tanggalHeader];
-
-                // Bikin Baris Penyekat / Header Tanggal
                 const rowHeader = document.createElement('tr');
                 rowHeader.innerHTML = `
                     <td colspan="5" style="background-color: #e8f5e9; color: #1b5e20; font-weight: bold; font-size: 1rem; padding: 10px; border-top: 2px solid #a5d6a7;">
@@ -435,7 +530,6 @@ function jalankanAplikasi(user) {
                 `;
                 tabelLaporan.appendChild(rowHeader);
 
-                // Baris Isian Data Laporan
                 listHariIni.forEach(item => {
                     const row = document.createElement('tr');
                     const statusColor = item.status === 'Lengkap' ? '#2e7d32' : '#c62828';
@@ -451,7 +545,6 @@ function jalankanAplikasi(user) {
             });
         }
 
-        // Hitung ulang grafik berdasarkan data terfilter
         const rekap = {};
         rawLaporanData.forEach(item => {
             if (!rekap[item.kobong]) rekap[item.kobong] = { total: 0, lengkap: 0 };
@@ -582,7 +675,7 @@ function jalankanAplikasi(user) {
                 let listHTML = `
                     <div style="margin-bottom: 12px; overflow: hidden;">
                         <button class="btn-delete-kobong" onclick="hapusKobong('${idKobong}')">Hapus Kobong</button>
-                        <button class="btn-edit-pengurus" onclick="editPengurusKobong('${idKobong}')">✏️️ Edit</button>
+                        <button class="btn-edit-pengurus" onclick="editPengurusKobong('${idKobong}')">✏ Edit</button>
                         <h3 style="color: #2e7d32; margin: 0;">Kobong ${dataKobong.nama_kobong}</h3>
                         <p style="margin: 6px 0 4px 0; font-size: 0.85rem; color: #1b5e20;">
                             <strong>Ketua:</strong> ${dataKobong.ketua || '-'} | <strong>Wakil:</strong> ${dataKobong.wakil || '-'}<br>
@@ -622,90 +715,4 @@ function jalankanAplikasi(user) {
         teks += `\n=============================\n_Dicetak otomatis dari Sistem_`;
         navigator.clipboard.writeText(teks).then(() => alert('Rekap berhasil disalin!')).catch(err => alert('Gagal menyalin: ' + err.message));
     };
-}
-
-// ===========================================================
-// FUNGSI HITUNG REKAP PER SANTRI
-// ===========================================================
-function hitungRekapPerSantri(rawLaporanData) {
-    const tabelSantri = document.getElementById('tabel-rekap-santri');
-    const filterKobong = document.getElementById('filter-kobong-santri');
-    const cariNama = document.getElementById('cari-nama-santri');
-
-    if (!tabelSantri) return;
-
-    // 1. Kumpulkan semua data dari detail_presensi
-    const rekapSantri = {}; // Format: { "Asep (Kobong 1A)": { nama, kobong, hadir, sakit, izin, alfa, total } }
-
-    rawLaporanData.forEach(laporan => {
-        if (laporan.detail_presensi && Array.isArray(laporan.detail_presensi)) {
-            laporan.detail_presensi.forEach(p => {
-                const key = `${p.nama}_${laporan.kobong}`;
-                
-                if (!rekapSantri[key]) {
-                    rekapSantri[key] = {
-                        nama: p.nama,
-                        kobong: laporan.kobong,
-                        hadir: 0,
-                        sakit: 0,
-                        izin: 0,
-                        alfa: 0,
-                        total: 0
-                    };
-                }
-
-                rekapSantri[key].total += 1;
-                if (p.status === 'Hadir') rekapSantri[key].hadir += 1;
-                else if (p.status === 'Sakit') rekapSantri[key].sakit += 1;
-                else if (p.status === 'Izin') rekapSantri[key].izin += 1;
-                else if (p.status === 'Alfa') rekapSantri[key].alfa += 1;
-            });
-        }
-    });
-
-    // Render Tabel
-    function renderTabelSantri() {
-        tabelSantri.innerHTML = '';
-        const selectedKobong = filterKobong ? filterKobong.value : 'ALL';
-        const keyword = cariNama ? cariNama.value.toLowerCase().trim() : '';
-
-        const listSantri = Object.values(rekapSantri).filter(item => {
-            const matchKobong = (selectedKobong === 'ALL' || item.kobong === selectedKobong);
-            const matchNama = item.nama.toLowerCase().includes(keyword);
-            return matchKobong && matchNama;
-        });
-
-        // Urutkan berdasarkan persentase kehadiran terrendah (supaya santri kurang rajin kelihatan di atas)
-        listSantri.sort((a, b) => (a.hadir / a.total) - (b.hadir / b.total));
-
-        if (listSantri.length === 0) {
-            tabelSantri.innerHTML = `<tr><td colspan="8" class="text-center">Belum ada data rekapan santri.</td></tr>`;
-            return;
-        }
-
-        listSantri.forEach((s, idx) => {
-            const persen = Math.round((s.hadir / s.total) * 100);
-            let warnaPersen = '#2e7d32'; // Hijau (Rajin)
-            if (persen < 75) warnaPersen = '#c62828'; // Merah (Perlu Perhatian)
-            else if (persen < 85) warnaPersen = '#f57c00'; // Oranye
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${idx + 1}</td>
-                <td><strong>${s.nama}</strong></td>
-                <td>Kobong ${s.kobong}</td>
-                <td style="color: green; font-weight: bold;">${s.hadir}</td>
-                <td style="color: orange;">${s.sakit}</td>
-                <td style="color: blue;">${s.izin}</td>
-                <td style="color: red; font-weight: bold;">${s.alfa}</td>
-                <td><span style="color: ${warnaPersen}; font-weight: bold;">${persen}%</span> <small>(${s.hadir}/${s.total})</small></td>
-            `;
-            tabelSantri.appendChild(row);
-        });
-    }
-
-    renderTabelSantri();
-
-    if (filterKobong) filterKobong.onchange = renderTabelSantri;
-    if (cariNama) cariNama.oninput = renderTabelSantri;
 }
