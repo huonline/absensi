@@ -179,6 +179,42 @@
             </div>
         </section>
 
+        <!-- SEKSI REKAP KEHADIRAN PER SANTRI -->
+<section class="admin-section" style="margin-top: 20px;">
+    <h2>📊 Rekap Kehadiran Per Santri</h2>
+
+    <!-- Filter & Pencarian Santri -->
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+        <select id="filter-kobong-santri" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+            <option value="ALL">-- Semua Kobong --</option>
+        </select>
+        <input type="text" id="cari-nama-santri" placeholder="Cari nama santri..." style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex: 1;">
+    </div>
+
+    <!-- Tabel Rekap Per Santri -->
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Santri</th>
+                    <th>Kobong</th>
+                    <th style="color: green;">Hadir</th>
+                    <th style="color: orange;">Sakit</th>
+                    <th style="color: blue;">Izin</th>
+                    <th style="color: red;">Alfa</th>
+                    <th>Persentase</th>
+                </tr>
+            </thead>
+            <tbody id="tabel-rekap-santri">
+                <tr>
+                    <td colspan="8" class="text-center">Memuat rekap data santri...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
     </div>
 
     <script type="module" src="script.js"></script>
