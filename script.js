@@ -98,7 +98,7 @@ function cekBatasWaktuAbsensi() {
     const menit = sekarang.getMinutes();
     const totalMenitSekarang = (jam * 60) + menit;
     const jamBuka = (22 * 60) + 30;  
-    const jamTutup = (23 * 60) + 30; 
+    const jamTutup = (24 * 60); 
     return (totalMenitSekarang >= jamBuka && totalMenitSekarang <= jamTutup);
 }
 
@@ -241,7 +241,7 @@ function jalankanAplikasi(user) {
             e.preventDefault();
             
             if (!namaKobongAktif) return;
-            if (!cekBatasWaktuAbsensi()) return alert('⚠️ AKSES DITUTUP!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 23:30 WIB.');
+            if (!cekBatasWaktuAbsensi()) return alert('⚠️ AKSES DITUTUP!\nLaporan absensi hanya dapat dikirim pada pukul 22:30 - 24:30 WIB.');
             
             const sekarang = new Date();
             const tglInfo = sekarang.toLocaleDateString('id-ID'); // Format: DD/MM/YYYY
